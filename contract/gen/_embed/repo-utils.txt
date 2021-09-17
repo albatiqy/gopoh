@@ -1,0 +1,25 @@
+package repository
+
+import (
+	gopoh "github.com/albatiqy/gopoh/contract"
+)
+
+type userMessageError struct {
+	err error
+	message string
+}
+
+func (msgerr userMessageError) RealError() error {
+	return msgerr.err
+}
+
+func (msgerr userMessageError) Error() string {
+	return msgerr.message
+}
+
+func newUserMessageError(message string, err error) gopoh.UserMessageError {
+	return userMessageError{
+		message: message,
+		err: err,
+	}
+}

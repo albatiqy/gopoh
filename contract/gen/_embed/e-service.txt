@@ -1,0 +1,130 @@
+package service
+
+import (
+	"context"
+
+	gopoh "github.com/albatiqy/gopoh/contract"
+	gopohRepo "github.com/albatiqy/gopoh/contract/repository"
+	"github.com/albatiqy/gopoh/contract/validation"{{if ne .imports ""}}
+{{.imports}}{{end}}
+)
+
+type {{.entityStructName}} struct {
+	q{{.entityStructName}}Reader core.Q{{.entityStructName}}Reader
+	e{{.entityStructName}}Writer core.E{{.entityStructName}}Writer
+	fieldLabel gopoh.FieldLabel
+}
+
+func (svc {{.entityStructName}}) Store(ctx context.Context, input core.E{{.entityStructName}}Input) (*core.E{{.entityStructName}}, error) {
+	v := svc.createE{{.entityStructName}}InputValidator(input)
+/*
+	v.CustomFieldRule("Nama", func(val interface{}) (bool, map[string]string) {
+		return val.(string) == "agus", nil
+	})
+*/
+	if vErr := v.Validate(); vErr != nil {
+		return nil, vErr
+	}
+
+	// define autoID!
+	{{.varKeyName}} :=
+	record, err := svc.e{{.entityStructName}}Writer.Store(ctx, input, {{.varKeyName}})
+	if err != nil {
+		if err, ok := err.(gopoh.UserMessageError); ok {
+			return nil, err
+		}
+		return nil, newError(err.Error())
+	}
+
+	return record, nil
+}
+
+func (svc {{.entityStructName}}) Update(ctx context.Context, input core.E{{.entityStructName}}Input, i{{.keyStructField}} interface{}) (*core.E{{.entityStructName}}, error) {
+	{{if ne .useIDConvertionFn "0"}}{{.varKeyName}}, err := svc.typeKeyE{{.entityStructName}}(i{{.keyStructField}})
+	if err != nil {
+		return nil, ErrInvalidInput
+	}
+
+	v := svc.createE{{.entityStructName}}InputValidator(input)
+	if vErr := v.Validate(); vErr != nil {
+		return nil, vErr
+	}
+
+	record, _, err := svc.e{{.entityStructName}}Writer.Update(ctx, input, {{.varKeyName}}){{else}}v := validation.NewInputValidator(input, nil)
+	if vErr := v.Validate(); vErr != nil {
+		return nil, vErr
+	}
+
+	record, _, err := svc.e{{.entityStructName}}Writer.Update(ctx, input, i{{.keyStructField}}.({{.keyType}})){{end}}
+	if err != nil {
+		if err, ok := err.(gopoh.UserMessageError); ok {
+			return nil, err
+		}
+		return nil, newError(err.Error())
+	}
+
+	return record, nil
+}
+
+func (svc {{.entityStructName}}) Delete(ctx context.Context, i{{.keyStructField}} interface{}) error {
+	{{if ne .useIDConvertionFn "0"}}{{.varKeyName}}, err := svc.typeKeyE{{.entityStructName}}(i{{.keyStructField}})
+	if err != nil {
+		return ErrInvalidInput
+	}
+
+	rowsAffected, err := svc.e{{.entityStructName}}Writer.Delete(ctx, {{.varKeyName}}){{else}}rowsAffected, err := e{{.entityStructName}}Writer.Delete(ctx, i{{.keyStructField}}.({{.keyType}})){{end}}
+	if err != nil {
+		if err, ok := err.(gopoh.UserMessageError); ok {
+			return err
+		}
+		return newError(err.Error())
+	}
+
+	if rowsAffected == 0 {
+		return ErrNoRecords
+	}
+
+	return nil
+}
+
+func (svc {{.entityStructName}}) GetByID(ctx context.Context, i{{.keyStructField}} interface{}) (*core.E{{.entityStructName}}, error) {
+	{{if ne .useIDConvertionFn "0"}}{{.varKeyName}}, err := svc.typeKeyE{{.entityStructName}}(i{{.keyStructField}})
+	if err != nil {
+		return nil, ErrInvalidInput
+	}
+
+	record, err := svc.q{{.entityStructName}}Reader.GetByID(ctx, {{.varKeyName}}){{else}}record, err := q{{.entityStructName}}Reader.GetByID(ctx, i{{.keyStructField}}.({{.keyType}})){{end}}
+	if err != nil {
+		return nil, newError(err.Error())
+	}
+
+	return record, nil
+}
+
+func (svc {{.entityStructName}}) FindAll(ctx context.Context, finderOptionCursor gopohRepo.FinderOptionCursor) ([]core.Q{{.entityStructName}}, *gopohRepo.CursorData, error) {
+	return svc.q{{.entityStructName}}Reader.CursorFindAll(ctx, finderOptionCursor)
+}
+{{if ne .useIDConvertionFn "0"}}
+func (svc {{.entityStructName}}) typeKeyE{{.entityStructName}}(i{{.keyStructField}} interface{}) ({{.keyType}}, error) {
+	{{if eq .useIDConvertionFn "1"}}switch realKey := i{{.keyStructField}}.(type) {
+	case string:  // todo: type penyesuaian
+		return strconv.ParseUint(realKey, 10, 64) // hati-hati
+	case {{.keyType}}:
+		return realKey, nil
+	}
+	return 0, ErrKeyInvalid{{else}}
+	// tidak tahu return aja sendiri
+	{{end}}
+}
+{{end}}
+func (svc {{.entityStructName}}) createE{{.entityStructName}}InputValidator(input interface{}) validation.InputValidator {
+	return validation.NewInputValidator(input, svc.fieldLabel)
+}
+
+func New{{.entityStructName}}(q{{.entityStructName}}Reader core.Q{{.entityStructName}}Reader, e{{.entityStructName}}Writer core.E{{.entityStructName}}Writer) *{{.entityStructName}} {
+	return &{{.entityStructName}}{
+		q{{.entityStructName}}Reader: q{{.entityStructName}}Reader,
+		e{{.entityStructName}}Writer: e{{.entityStructName}}Writer,
+		fieldLabel: fieldLabel,
+	}
+}

@@ -1,0 +1,23 @@
+// hasil generate, jangan diedit
+package core
+
+import (
+	"context"
+{{if ne .imports ""}}
+{{.imports}}{{end}}
+	// "github.com/albatiqy/gopoh/pkg/lib/null"
+	gopohRepo "github.com/albatiqy/gopoh/contract/repository"
+)
+
+type E{{.queryStructName}} struct {
+{{.fieldsE}}
+}
+
+type Q{{.queryStructName}} struct {
+{{.fieldsQ}}
+}
+
+type Q{{.queryStructName}}Reader interface {
+	CursorFindAll(ctx context.Context, finderOptionCursor gopohRepo.FinderOptionCursor) ([]Q{{.queryStructName}}, *gopohRepo.CursorData, error)
+	GetByID(ctx context.Context, {{.varKeyName}} {{.keyType}}) (*E{{.queryStructName}}, error)
+}

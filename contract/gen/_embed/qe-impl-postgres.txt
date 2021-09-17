@@ -1,0 +1,94 @@
+package repository
+
+import (
+	"context"
+{{if ne .imports ""}}
+{{.imports}}{{end}}
+	gopohRepo "github.com/albatiqy/gopoh/contract/repository"
+	"github.com/albatiqy/gopoh/contract/repository/sqldb"
+)
+
+type q{{.queryStructName}}Reader{{.dbDriverStr}} struct {
+	conn *sqldb.Conn
+	attrMap *sqldb.AttrMap
+}
+
+func (r q{{.queryStructName}}Reader{{.dbDriverStr}}) CursorFindAll(ctx context.Context, finderOptionCursor gopohRepo.FinderOptionCursor) ([]core.Q{{.queryStructName}}, *gopohRepo.CursorData, error) {
+	qBuilder := r.conn.NewFinderCursorQueryBuilder(
+		"{{.sqlSelectAll}}",
+		finderOptionCursor, r.attrMap){{if ne .whereSoftDelete ""}}
+	qBuilder.AddWhereRaw("{{.whereSoftDelete}}")
+{{end}}
+	query, args, err := qBuilder.Build()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	rows, err := r.conn.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close()
+
+	records := make([]core.Q{{.queryStructName}}, 0)
+
+	for rows.Next() {
+		record := core.Q{{.queryStructName}}{}
+		if err := rows.Scan(
+{{.fieldScansQ}}
+		); err != nil {
+			return nil, nil, err
+		}
+		records = append(records, record)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, nil, err
+	}
+
+	qCursorData := &gopohRepo.CursorData{}
+
+	qBuilder.FillCursorData(qCursorData, len(records), func(itemsLen int, hasNext, isPrevNav bool) (string, string) {
+		if isPrevNav {
+			for i, j := 0, itemsLen; i < j; i, j = i+1, j-1 {
+				records[i], records[j] = records[j], records[i]
+			}
+		}
+
+		lastID := ""
+		if hasNext {
+			if isPrevNav {
+				records = records[1:]
+			} else {
+				records = records[:itemsLen]
+			}
+			lastID = records[itemsLen-1].{{.keyStructFieldFindAll}}
+		} else {
+			lastID = records[itemsLen].{{.keyStructFieldFindAll}}
+		}
+
+		return records[0].{{.keyStructFieldFindAll}}, lastID
+	})
+
+	return records, qCursorData, nil
+}
+
+func (r q{{.queryStructName}}Reader{{.dbDriverStr}}) GetByID(ctx context.Context, {{.varKeyName}} {{.keyType}}) (*core.E{{.queryStructName}}, error) {
+	record := core.E{{.queryStructName}}{}
+	if err := r.conn.QueryRowContext(ctx,
+		"{{.sqlSelectByID}}",
+		{{.varKeyName}},
+	).Scan(
+{{.fieldScansQByID}}
+	); err!=nil {
+		return nil, err
+	}
+
+	return &record, nil
+}
+
+func NewQ{{.queryStructName}}Reader{{.dbDriverStr}}(conn *sqldb.Conn) (core.Q{{.queryStructName}}Reader, error) {
+	return q{{.queryStructName}}Reader{{.dbDriverStr}}{
+		conn: conn,
+		attrMap: getQE{{.queryStructName}}AttrMap{{.dbDriverStr}}(),
+	}, nil
+}

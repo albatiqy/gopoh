@@ -1,0 +1,94 @@
+package repository
+
+import (
+	"context"
+	// "database/sql"
+{{if ne .imports ""}}
+{{.imports}}{{end}}
+	"github.com/albatiqy/gopoh/contract/repository/sqldb"
+)
+
+type e{{.entityStructName}}Writer{{.dbDriverStr}} struct {
+	conn *sqldb.Conn
+	reader q{{.entityStructName}}Reader{{.dbDriverStr}}
+}
+
+func (w e{{.entityStructName}}Writer{{.dbDriverStr}}) Store(ctx context.Context, input core.E{{.entityStructName}}Input, {{.varKeyName}} {{.keyType}}) (*core.E{{.entityStructName}}, error) {
+	_, err := w.conn.ExecContext(ctx,
+		"{{.sqlEStore}}",
+		{{.varKeyName}},
+{{.storeFieldArgs}}
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return w.reader.GetByID(ctx, {{.varKeyName}})
+}
+
+// jika softDelete cek dulu di database
+func (w e{{.entityStructName}}Writer{{.dbDriverStr}}) Update(ctx context.Context, input core.E{{.entityStructName}}Input, {{.varKeyName}} {{.keyType}}) (*core.E{{.entityStructName}}, int64, error) {
+	res, err := w.conn.ExecContext(ctx,
+		"{{.sqlEUpdate}}",
+{{.updateFieldArgs}}
+		{{.varKeyName}},
+	)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	record, err := w.reader.GetByID(ctx, {{.varKeyName}})
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return record, rowsAffected, nil
+}
+{{if eq .softDeleteStr ""}}
+func (w e{{.entityStructName}}Writer{{.dbDriverStr}}) Delete(ctx context.Context, {{.varKeyName}} {{.keyType}}) (int64, error) {
+	res, err := w.conn.ExecContext(ctx,
+		"{{.sqlEDelete}}",
+		{{.varKeyName}},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return rowsAffected, nil
+}{{else}}
+func (w e{{.entityStructName}}Writer{{.dbDriverStr}}) Delete(ctx context.Context, {{.varKeyName}} {{.keyType}}) (int64, error) {
+	deletedAt := time.Now().UTC()
+
+	res, err := w.conn.ExecContext(ctx,
+		"{{.sqlEDelete}}",
+		deletedAt,
+		{{.varKeyName}},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return 0, err
+	}
+
+	return rowsAffected, nil
+}{{end}}
+
+func NewE{{.entityStructName}}Writer{{.dbDriverStr}}(conn *sqldb.Conn, reader core.Q{{.entityStructName}}Reader) (core.E{{.entityStructName}}Writer, error) {
+	return &e{{.entityStructName}}Writer{{.dbDriverStr}}{
+		conn:   conn,
+		reader: reader.(q{{.entityStructName}}Reader{{.dbDriverStr}}),
+	}, nil
+}

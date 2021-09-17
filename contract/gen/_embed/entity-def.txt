@@ -1,0 +1,47 @@
+// hasil generate, jangan diedit
+// {{.completeAttrList}}
+package main
+
+import (
+	"os"
+	"fmt"
+	"flag"
+
+	"github.com/albatiqy/gopoh/contract/gen"
+	"github.com/albatiqy/gopoh/contract/gen/driver"
+	_ "github.com/albatiqy/gopoh/contract/gen/driver/{{.selectedDBDriver}}"
+{{if ne .imports ""}}{{.imports}}{{end}}
+)
+
+var (
+	e_{{.nsName}} = gen.EntityDef{
+		TableName: "{{.tableName}}",
+		EntityName : "{{.entityName}}",
+		FieldDefs: map[string]driver.FieldDef{
+{{.fields}}
+		},
+		KeyAttr : "{{.keyAttr}}",
+		KeyAuto: {{.keyAutoStr}},
+		KeyCanUpdate: {{.keyCanUpdateStr}},
+		SoftDelete: {{.softDeleteStr}},
+		// EAttrs: []string{}
+	}
+)
+
+func init() {
+	cmds["{{.tableName}}"] = func(flg *flag.FlagSet, args []string) {
+		if len(args) < 1 {
+			fmt.Println("kurang perintah")
+			os.Exit(1)
+		}
+		switch args[0] {
+		case "contr":
+			e_{{.nsName}}.GenerateContr(workingDir)
+		case "impl":
+			e_{{.nsName}}.GenerateImpl(workingDir, "{{.selectedDBDriver}}")
+		default:
+			fmt.Println("perintah tak valid")
+			os.Exit(1)
+		}
+	}
+}

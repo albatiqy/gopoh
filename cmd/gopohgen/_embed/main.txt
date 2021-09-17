@@ -1,0 +1,52 @@
+package main
+
+import (
+	"os"
+	"flag"
+
+	"github.com/albatiqy/gopoh/contract/gen"
+	"github.com/albatiqy/gopoh/contract/log"
+	// "github.com/albatiqy/gopoh/contract/sqldb"
+
+	// semua driver import dulu
+	_ "github.com/albatiqy/gopoh/contract/gen/driver/mysql"
+	_ "github.com/albatiqy/gopoh/contract/gen/driver/postgres"
+)
+
+var (
+	tableDef = gen.TableDef{
+		DBEnvKey: "{{.dbEnvKey}}",
+		DBDriver: "{{.dbDriver}}",
+		TableName: "{{.tableName}}",
+		FieldDefs: fieldDefs,
+		KeyAttr: "{{.keyAttr}}",
+		KeyAuto: {{.keyAutoStr}},
+		KeyCanUpdate: {{.keyCanUpdateStr}},
+		SoftDelete: {{.softDeleteStr}},
+		// EntityAttrs: ,
+		EntityName: "{{.tableName}}",
+		OverridesLabel: map[string]string{
+{{.overridesLabel}}
+			},
+		OverridesStructField: map[string]string{
+{{.overridesStructField}}
+			},
+		OverridesType: map[string]interface{}{
+{{.overridesType}}
+			},
+		OverridesJSON: map[string]string{
+{{.overridesJSON}}
+			},
+	}
+)
+
+func main() {
+	var dbDriver string
+	flag.StringVar(&dbDriver, "d", tableDef.DBDriver, "nama DB driver")
+	flag.Parse()
+	workingDir, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+	tableDef.GenerateDBTarget(workingDir, dbDriver)
+}

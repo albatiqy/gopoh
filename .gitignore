@@ -1,0 +1,5 @@
+/_refs
+/vendor
+go.sum
+install-gopohgen.bat
+install-gopohcmd.bat

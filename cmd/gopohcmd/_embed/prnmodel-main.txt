@@ -1,0 +1,17 @@
+package main
+
+import (
+	"fmt"
+	"encoding/json"
+
+    "{{.contractPackage}}"
+)
+
+func main() {
+	model := core.{{.modelName}}{}
+	if jsnByte, err := json.MarshalIndent(model, "", "    "); err != nil {
+		fmt.Println("Error: ", err)
+	} else {
+		fmt.Println(string(jsnByte))
+	}
+}

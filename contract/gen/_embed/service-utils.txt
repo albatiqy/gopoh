@@ -1,0 +1,49 @@
+package service
+
+import (
+	"fmt"
+
+	"github.com/albatiqy/gopoh/contract/validation"
+	"github.com/albatiqy/gopoh/contract/log"
+)
+
+var (
+	ErrNoRecords    = fmt.Errorf("")
+	ErrInvalidInput = fmt.Errorf("")
+	ErrInternal     = fmt.Errorf("")
+)
+
+type validationError struct {
+	message string
+}
+
+func (o validationError) Error() string {
+	return o.message
+}
+
+func (o validationError) ValidationMessages() map[string][]string {
+	return nil
+}
+
+type eFieldLabel struct {
+	lc        string
+	labels    map[string]string
+}
+
+func (l eFieldLabel) GetLabel(structField string) string {
+	if label, ok := l.labels[structField]; ok {
+		return label
+	}
+	return structField
+}
+
+func newError(message string) error {
+	log.Warning("internal error: ", message)
+	return ErrInternal
+}
+
+func newValidationError(message string) validation.ValidationError {
+	return validationError{
+		message: message,
+	}
+}

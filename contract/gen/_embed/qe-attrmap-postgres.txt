@@ -1,0 +1,15 @@
+package repository
+
+import ({{if ne .imports ""}}
+{{.imports}}{{end}}
+	"github.com/albatiqy/gopoh/contract/repository/sqldb"
+)
+
+func getQE{{.queryStructName}}AttrMap{{.dbDriverStr}}() *sqldb.AttrMap {
+	return &sqldb.AttrMap{
+		KeyAttr: "{{.keyAttr}}",
+		Cols: map[string]string{
+{{.maps}}
+		},
+	}
+}

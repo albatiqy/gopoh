@@ -1,0 +1,13 @@
+// hasil generate, jangan diedit
+package main
+
+import (
+	"github.com/albatiqy/gopoh/contract/gen/driver"
+{{if ne .imports ""}}{{.imports}}{{end}}
+)
+
+var (
+	fieldDefs = map[string]driver.FieldDef{
+{{.fieldDefs}}
+	}
+)

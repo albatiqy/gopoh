@@ -1,0 +1,37 @@
+package main
+
+import (
+	"fmt"
+	"os"
+	"flag"
+
+	"github.com/albatiqy/gopoh/contract/log"
+	// "github.com/albatiqy/gopoh-gen"
+)
+
+var (
+	cmds = make(map[string]func(*flag.FlagSet, []string))
+	externalPackage = false
+	workingDir string
+)
+
+func main() {
+    if len(os.Args) < 2 {
+		fmt.Println("kurang perintah")
+		os.Exit(1)
+    }
+
+	var err error
+	workingDir, err = os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if cmdFn, ok := cmds[os.Args[1]]; ok {
+		flg := flag.NewFlagSet(os.Args[1], flag.ExitOnError)
+		cmdFn(flg, os.Args[2:])
+	} else {
+        fmt.Println("perintah tak valid")
+        os.Exit(1)
+	}
+}
