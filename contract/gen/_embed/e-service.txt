@@ -9,13 +9,13 @@ import (
 {{.imports}}{{end}}
 )
 
-type {{.entityStructName}} struct {
+type {{.entityStructName}}Service struct {
 	q{{.entityStructName}}Reader core.Q{{.entityStructName}}Reader
 	e{{.entityStructName}}Writer core.E{{.entityStructName}}Writer
 	fieldLabel gopoh.FieldLabel
 }
 
-func (svc {{.entityStructName}}) Store(ctx context.Context, input core.E{{.entityStructName}}Input) (*core.E{{.entityStructName}}, error) {
+func (svc {{.entityStructName}}Service) Store(ctx context.Context, input core.E{{.entityStructName}}Input) (*core.E{{.entityStructName}}, error) {
 	v := svc.createE{{.entityStructName}}InputValidator(input)
 /*
 	v.CustomFieldRule("Nama", func(val interface{}) (bool, map[string]string) {
@@ -39,7 +39,7 @@ func (svc {{.entityStructName}}) Store(ctx context.Context, input core.E{{.entit
 	return record, nil
 }
 
-func (svc {{.entityStructName}}) Update(ctx context.Context, input core.E{{.entityStructName}}Input, i{{.keyStructField}} interface{}) (*core.E{{.entityStructName}}, error) {
+func (svc {{.entityStructName}}Service) Update(ctx context.Context, input core.E{{.entityStructName}}Input, i{{.keyStructField}} interface{}) (*core.E{{.entityStructName}}, error) {
 	{{if ne .useIDConvertionFn "0"}}{{.varKeyName}}, err := svc.typeKeyE{{.entityStructName}}(i{{.keyStructField}})
 	if err != nil {
 		return nil, ErrInvalidInput
@@ -66,7 +66,7 @@ func (svc {{.entityStructName}}) Update(ctx context.Context, input core.E{{.enti
 	return record, nil
 }
 
-func (svc {{.entityStructName}}) Delete(ctx context.Context, i{{.keyStructField}} interface{}) error {
+func (svc {{.entityStructName}}Service) Delete(ctx context.Context, i{{.keyStructField}} interface{}) error {
 	{{if ne .useIDConvertionFn "0"}}{{.varKeyName}}, err := svc.typeKeyE{{.entityStructName}}(i{{.keyStructField}})
 	if err != nil {
 		return ErrInvalidInput
@@ -87,7 +87,7 @@ func (svc {{.entityStructName}}) Delete(ctx context.Context, i{{.keyStructField}
 	return nil
 }
 
-func (svc {{.entityStructName}}) GetByID(ctx context.Context, i{{.keyStructField}} interface{}) (*core.E{{.entityStructName}}, error) {
+func (svc {{.entityStructName}}Service) GetByID(ctx context.Context, i{{.keyStructField}} interface{}) (*core.E{{.entityStructName}}, error) {
 	{{if ne .useIDConvertionFn "0"}}{{.varKeyName}}, err := svc.typeKeyE{{.entityStructName}}(i{{.keyStructField}})
 	if err != nil {
 		return nil, ErrInvalidInput
@@ -101,11 +101,11 @@ func (svc {{.entityStructName}}) GetByID(ctx context.Context, i{{.keyStructField
 	return record, nil
 }
 
-func (svc {{.entityStructName}}) FindAll(ctx context.Context, finderOptionCursor gopohRepo.FinderOptionCursor) ([]core.Q{{.entityStructName}}, *gopohRepo.CursorData, error) {
+func (svc {{.entityStructName}}Service) FindAll(ctx context.Context, finderOptionCursor gopohRepo.FinderOptionCursor) ([]core.Q{{.entityStructName}}, *gopohRepo.CursorData, error) {
 	return svc.q{{.entityStructName}}Reader.CursorFindAll(ctx, finderOptionCursor)
 }
 {{if ne .useIDConvertionFn "0"}}
-func (svc {{.entityStructName}}) typeKeyE{{.entityStructName}}(i{{.keyStructField}} interface{}) ({{.keyType}}, error) {
+func (svc {{.entityStructName}}Service) typeKeyE{{.entityStructName}}(i{{.keyStructField}} interface{}) ({{.keyType}}, error) {
 	{{if eq .useIDConvertionFn "1"}}switch realKey := i{{.keyStructField}}.(type) {
 	case string:  // todo: type penyesuaian
 		return strconv.ParseUint(realKey, 10, 64) // hati-hati
@@ -117,14 +117,14 @@ func (svc {{.entityStructName}}) typeKeyE{{.entityStructName}}(i{{.keyStructFiel
 	{{end}}
 }
 {{end}}
-func (svc {{.entityStructName}}) createE{{.entityStructName}}InputValidator(input interface{}) validation.InputValidator {
+func (svc {{.entityStructName}}Service) createE{{.entityStructName}}InputValidator(input interface{}) validation.InputValidator {
 	return validation.NewInputValidator(input, svc.fieldLabel)
 }
 
-func New{{.entityStructName}}(q{{.entityStructName}}Reader core.Q{{.entityStructName}}Reader, e{{.entityStructName}}Writer core.E{{.entityStructName}}Writer) *{{.entityStructName}} {
-	return &{{.entityStructName}}{
+func New{{.entityStructName}}Service(q{{.entityStructName}}Reader core.Q{{.entityStructName}}Reader, e{{.entityStructName}}Writer core.E{{.entityStructName}}Writer) (*{{.entityStructName}}Service, error) {
+	return &{{.entityStructName}}Service{
 		q{{.entityStructName}}Reader: q{{.entityStructName}}Reader,
 		e{{.entityStructName}}Writer: e{{.entityStructName}}Writer,
 		fieldLabel: fieldLabel,
-	}
+	}, nil
 }

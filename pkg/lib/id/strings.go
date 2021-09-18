@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"crypto/rand"
 
-	"github.com/segmentio/ksuid"
-	"github.com/rs/xid"
+	// "github.com/segmentio/ksuid"
+	// "github.com/rs/xid"
 )
 
+/*
 // 1sHUttQAiqFD2bv0q6TPpxl6lFE
 func NextKSUID() string {
 	id := ksuid.New()
@@ -19,6 +20,7 @@ func NextXID() string {
 	id := xid.New()
 	return id.String()
 }
+*/
 
 // be6b758692fa91824053e7ddef4b8e6f
 func NextGUID() (string, error) {

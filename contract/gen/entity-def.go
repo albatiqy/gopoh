@@ -352,6 +352,7 @@ func (obj EntityDef) GenerateImpl(pathPrjDir string, dbDriver string) {
 		}
 	}
 
+	useImportE["internal"] = modName + "/internal"
 	useImportE["core"] = modName + "/internal/core"
 
 	softDeleteStr := ""
