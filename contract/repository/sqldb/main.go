@@ -89,9 +89,11 @@ func NewConn(dbSetting *DBSetting) *Conn {
 	spec := DriversSpec[dbSetting.DriverName] // panic kalo blm diload
 	db := spec.Open(dbSetting)
 
+	/*
 	if err := db.Ping(); err != nil {
 		return nil
 	}
+	*/
 
 	return &Conn{
 		DB:         db,

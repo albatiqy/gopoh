@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	_ "github.com/lib/pq"
 
@@ -46,6 +47,9 @@ func (spec DriverSpec) Open(dbSetting *sqldb.DBSetting) *sql.DB {
 		log.Debugf(`sqldb: %s`, err)
 		return nil
 	}
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(25)
+	db.SetConnMaxLifetime(5*time.Minute)
 
 	return db
 }
