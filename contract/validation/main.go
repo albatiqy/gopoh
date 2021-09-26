@@ -137,7 +137,7 @@ func (v InputValidator) Validate() error {
 	return nil
 }
 
-func NewInputValidator(input interface{}, fieldLabel contract.FieldLabel, tags ...string) InputValidator {
+func NewInputValidator(input interface{}, fieldsLabel contract.FieldsLabel, tags ...string) InputValidator {
 	validate := validator.New()
 	validate.RegisterTagNameFunc(func(sf reflect.StructField) string {
 		name := strings.SplitN(sf.Tag.Get("json"), ",", 2)[0]
@@ -170,6 +170,6 @@ func NewInputValidator(input interface{}, fieldLabel contract.FieldLabel, tags .
 	return InputValidator{
 		validator:   validate,
 		inputStruct: input,
-		translator:  newTranslator(fieldLabel),
+		translator:  newTranslator(fieldsLabel),
 	}
 }

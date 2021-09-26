@@ -9,8 +9,8 @@ import (
 )
 
 type messageTranslator struct {
-	fieldLabel contract.FieldLabel
-	messages   map[string]string
+	fieldsLabel contract.FieldsLabel
+	messages    map[string]string
 }
 
 func (t messageTranslator) translate(fieldError validator.FieldError) string {
@@ -29,15 +29,15 @@ func (t messageTranslator) translate(fieldError validator.FieldError) string {
 }
 
 func (t messageTranslator) getLabel(fieldError validator.FieldError) string {
-	if t.fieldLabel == nil {
+	if t.fieldsLabel == nil {
 		return fieldError.Field()
 	}
-	return t.fieldLabel.GetLabel(fieldError.StructField())
+	return t.fieldsLabel.GetLabel(fieldError.StructField())
 }
 
-func newTranslator(fieldLabel contract.FieldLabel) *messageTranslator {
+func newTranslator(fieldsLabel contract.FieldsLabel) *messageTranslator {
 	return &messageTranslator{
-		fieldLabel: fieldLabel,
+		fieldsLabel: fieldsLabel,
 		messages: map[string]string{
 			"required": "{:field} wajib diisi",
 			"email":    "{:field} harus berupa alamat email yang valid",

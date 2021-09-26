@@ -5,8 +5,8 @@ import ({{if ne .imports ""}}
 	"github.com/albatiqy/gopoh/contract/repository/sqldb"
 )
 
-func getQE{{.queryStructName}}AttrMap{{.dbDriverStr}}() *sqldb.AttrMap {
-	return &sqldb.AttrMap{
+func getQE{{.queryStructName}}ColsMap{{.dbDriverStr}}() *sqldb.ColsMap {
+	return &sqldb.ColsMap{
 		KeyAttr: "{{.keyAttr}}",
 		Cols: map[string]string{
 {{.maps}}

@@ -1,0 +1,24 @@
+package service
+
+import ({{if ne .imports ""}}
+{{.imports}}{{end}}
+	gopoh "github.com/albatiqy/gopoh/contract"
+)
+{{if ne .warningText ""}}
+// {{.warningText}}{{end}}
+func getQE{{.queryStructName}}FieldsMap() *gopoh.FieldsMap {
+	return &gopoh.FieldsMap{
+		KeyAttr: "{{.keyAttr}}",
+		Fields: map[string]string{
+{{.fieldsMap}}
+		},
+	}
+}
+
+func getQE{{.queryStructName}}FieldsLabel() gopoh.FieldsLabel {
+	return eFieldsLabel{
+		labels: map[string]string{
+{{.labelsMap}}
+		},
+	}
+}

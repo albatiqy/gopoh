@@ -10,12 +10,18 @@ import (
 )
 
 type {{.entityStructName}}Service struct {
+	gate gopoh.Gate
 	q{{.entityStructName}}Reader core.Q{{.entityStructName}}Reader
 	e{{.entityStructName}}Writer core.E{{.entityStructName}}Writer
-	fieldLabel gopoh.FieldLabel
+	fieldsLabel gopoh.FieldsLabel
 }
 
 func (svc {{.entityStructName}}Service) Store(ctx context.Context, input core.E{{.entityStructName}}Input) (*core.E{{.entityStructName}}, error) {
+	var err error
+	if ctx, err = svc.gate.RequireKey(ctx); err != nil {
+		return nil, err
+	}
+
 	v := svc.createE{{.entityStructName}}InputValidator(input)
 /*
 	v.CustomFieldRule("Nama", func(val interface{}) (bool, map[string]string) {
@@ -33,16 +39,21 @@ func (svc {{.entityStructName}}Service) Store(ctx context.Context, input core.E{
 		if err, ok := err.(gopoh.UserMessageError); ok {
 			return nil, err
 		}
-		return nil, newError(err.Error())
+		return nil, newInternalError(err.Error(), err)
 	}
 
 	return record, nil
 }
 
 func (svc {{.entityStructName}}Service) Update(ctx context.Context, input core.E{{.entityStructName}}Input, i{{.keyStructField}} interface{}) (*core.E{{.entityStructName}}, error) {
+	var err error
+	if ctx, err = svc.gate.RequireKey(ctx); err != nil {
+		return nil, err
+	}
+
 	{{if ne .useIDConvertionFn "0"}}{{.varKeyName}}, err := svc.typeKeyE{{.entityStructName}}(i{{.keyStructField}})
 	if err != nil {
-		return nil, ErrInvalidInput
+		return nil, err
 	}
 
 	v := svc.createE{{.entityStructName}}InputValidator(input)
@@ -60,16 +71,21 @@ func (svc {{.entityStructName}}Service) Update(ctx context.Context, input core.E
 		if err, ok := err.(gopoh.UserMessageError); ok {
 			return nil, err
 		}
-		return nil, newError(err.Error())
+		return nil, newInternalError(err.Error(), err)
 	}
 
 	return record, nil
 }
 
 func (svc {{.entityStructName}}Service) Delete(ctx context.Context, i{{.keyStructField}} interface{}) error {
+	var err error
+	if ctx, err = svc.gate.RequireKey(ctx); err != nil {
+		return err
+	}
+
 	{{if ne .useIDConvertionFn "0"}}{{.varKeyName}}, err := svc.typeKeyE{{.entityStructName}}(i{{.keyStructField}})
 	if err != nil {
-		return ErrInvalidInput
+		return err
 	}
 
 	rowsAffected, err := svc.e{{.entityStructName}}Writer.Delete(ctx, {{.varKeyName}}){{else}}rowsAffected, err := e{{.entityStructName}}Writer.Delete(ctx, i{{.keyStructField}}.({{.keyType}})){{end}}
@@ -77,31 +93,44 @@ func (svc {{.entityStructName}}Service) Delete(ctx context.Context, i{{.keyStruc
 		if err, ok := err.(gopoh.UserMessageError); ok {
 			return err
 		}
-		return newError(err.Error())
+		return newInternalError(err.Error(), err)
 	}
 
 	if rowsAffected == 0 {
-		return ErrNoRecords
+		return ServiceError{
+			err: nil,
+			code: ErrNoRecords,
+		}
 	}
 
 	return nil
 }
 
 func (svc {{.entityStructName}}Service) GetByID(ctx context.Context, i{{.keyStructField}} interface{}) (*core.E{{.entityStructName}}, error) {
+	var err error
+	if ctx, err = svc.gate.RequireKey(ctx); err != nil {
+		return nil, err
+	}
+
 	{{if ne .useIDConvertionFn "0"}}{{.varKeyName}}, err := svc.typeKeyE{{.entityStructName}}(i{{.keyStructField}})
 	if err != nil {
-		return nil, ErrInvalidInput
+		return nil, err
 	}
 
 	record, err := svc.q{{.entityStructName}}Reader.GetByID(ctx, {{.varKeyName}}){{else}}record, err := q{{.entityStructName}}Reader.GetByID(ctx, i{{.keyStructField}}.({{.keyType}})){{end}}
 	if err != nil {
-		return nil, newError(err.Error())
+		return nil, newInternalError(err.Error(), err)
 	}
 
 	return record, nil
 }
 
 func (svc {{.entityStructName}}Service) FindAll(ctx context.Context, finderOptionCursor gopohRepo.FinderOptionCursor) ([]core.Q{{.entityStructName}}, *gopohRepo.CursorData, error) {
+	var err error
+	if ctx, err = svc.gate.RequireKey(ctx); err != nil {
+		return nil, nil, err
+	}
+
 	return svc.q{{.entityStructName}}Reader.CursorFindAll(ctx, finderOptionCursor)
 }
 {{if ne .useIDConvertionFn "0"}}
@@ -112,19 +141,23 @@ func (svc {{.entityStructName}}Service) typeKeyE{{.entityStructName}}(i{{.keyStr
 	case {{.keyType}}:
 		return realKey, nil
 	}
-	return 0, ErrKeyInvalid{{else}}
+	return 0, ServiceError{
+		err: nil,
+		code: ErrInvalidInput,
+	}{{else}}
 	// tidak tahu return aja sendiri
 	{{end}}
 }
 {{end}}
 func (svc {{.entityStructName}}Service) createE{{.entityStructName}}InputValidator(input interface{}) validation.InputValidator {
-	return validation.NewInputValidator(input, svc.fieldLabel)
+	return validation.NewInputValidator(input, svc.fieldsLabel)
 }
 
-func New{{.entityStructName}}Service(q{{.entityStructName}}Reader core.Q{{.entityStructName}}Reader, e{{.entityStructName}}Writer core.E{{.entityStructName}}Writer) (*{{.entityStructName}}Service, error) {
+func New{{.entityStructName}}Service(gate gopoh.Gate, q{{.entityStructName}}Reader core.Q{{.entityStructName}}Reader, e{{.entityStructName}}Writer core.E{{.entityStructName}}Writer) (*{{.entityStructName}}Service, error) {
 	return &{{.entityStructName}}Service{
+		gate: gate,
 		q{{.entityStructName}}Reader: q{{.entityStructName}}Reader,
 		e{{.entityStructName}}Writer: e{{.entityStructName}}Writer,
-		fieldLabel: fieldLabel,
+		fieldsLabel: getQE{{.entityStructName}}FieldsLabel(),
 	}, nil
 }

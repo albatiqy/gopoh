@@ -13,7 +13,7 @@ type FinderCursorQueryBuilder struct {
 	baseQuery          string
 	whereRaws          []string
 	finderOptionCursor repository.FinderOptionCursor
-	attrMap            *AttrMap
+	colsMap            *ColsMap
 	isPrevNav          bool
 	cursorID           string
 }
@@ -42,7 +42,7 @@ func (qBuilder *FinderCursorQueryBuilder) Build() (string, []interface{}, error)
 	if qBuilder.finderOptionCursor.PageSize == 0 {
 		qBuilder.finderOptionCursor.PageSize = 4 // default pageSize
 	}
-	return qBuilder.driverSpec.BuildFinderCursorQuery(qBuilder.cursorID, qBuilder.isPrevNav, qBuilder.baseQuery, qBuilder.finderOptionCursor, qBuilder.whereRaws, qBuilder.attrMap)
+	return qBuilder.driverSpec.BuildFinderCursorQuery(qBuilder.cursorID, qBuilder.isPrevNav, qBuilder.baseQuery, qBuilder.finderOptionCursor, qBuilder.whereRaws, qBuilder.colsMap)
 }
 
 func (qBuilder FinderCursorQueryBuilder) FillCursorData(cursorData *repository.CursorData, recordsLen int, getID func(itemsLen int, hasNext, isPrevNav bool) (string, string)) {

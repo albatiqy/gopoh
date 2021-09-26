@@ -22,7 +22,7 @@ type DBSetting struct {
 
 type DriverSpec interface {
 	Open(dbSetting *DBSetting) *sql.DB
-	BuildFinderCursorQuery(cursorID string, isPrevNav bool, baseQuery string, finderOptionCursor repository.FinderOptionCursor, whereRaws []string, attrMap *AttrMap) (string, []interface{}, error)
+	BuildFinderCursorQuery(cursorID string, isPrevNav bool, baseQuery string, finderOptionCursor repository.FinderOptionCursor, whereRaws []string, colsMap *ColsMap) (string, []interface{}, error)
 }
 
 type Conn struct {
@@ -68,16 +68,16 @@ func (cn Conn) DriverName() string {
 	return cn.dbSetting.DriverName
 }
 
-func (cn Conn) NewFinderCursorQueryBuilder(baseQuery string, finderOptionCursor repository.FinderOptionCursor, attrMap *AttrMap) FinderCursorQueryBuilder {
+func (cn Conn) NewFinderCursorQueryBuilder(baseQuery string, finderOptionCursor repository.FinderOptionCursor, colsMap *ColsMap) FinderCursorQueryBuilder {
 	return FinderCursorQueryBuilder{
 		driverSpec:         cn.driverSpec,
 		baseQuery:          baseQuery,
 		finderOptionCursor: finderOptionCursor,
-		attrMap:            attrMap,
+		colsMap:            colsMap,
 	}
 }
 
-type AttrMap struct {
+type ColsMap struct {
 	KeyAttr string
 	Cols    map[string]string
 }

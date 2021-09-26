@@ -9,7 +9,7 @@ type userMessageError struct {
 	message string
 }
 
-func (msgerr userMessageError) RealError() error {
+func (msgerr userMessageError) Unwrap() error {
 	return msgerr.err
 }
 

@@ -10,13 +10,13 @@ import (
 
 type q{{.queryStructName}}Reader{{.dbDriverStr}} struct {
 	conn *sqldb.Conn
-	attrMap *sqldb.AttrMap
+	colsMap *sqldb.ColsMap
 }
 
 func (r q{{.queryStructName}}Reader{{.dbDriverStr}}) CursorFindAll(ctx context.Context, finderOptionCursor gopohRepo.FinderOptionCursor) ([]core.Q{{.queryStructName}}, *gopohRepo.CursorData, error) {
 	qBuilder := r.conn.NewFinderCursorQueryBuilder(
 		"{{.sqlSelectAll}}",
-		finderOptionCursor, r.attrMap){{if ne .whereSoftDelete ""}}
+		finderOptionCursor, r.colsMap){{if ne .whereSoftDelete ""}}
 	qBuilder.AddWhereRaw("{{.whereSoftDelete}}")
 {{end}}
 	query, args, err := qBuilder.Build()
@@ -102,6 +102,6 @@ func (r q{{.queryStructName}}Reader{{.dbDriverStr}}) GetByID(ctx context.Context
 func NewQ{{.queryStructName}}Reader{{.dbDriverStr}}(conn *sqldb.Conn) (core.Q{{.queryStructName}}Reader, error) {
 	return q{{.queryStructName}}Reader{{.dbDriverStr}}{
 		conn: conn,
-		attrMap: getQE{{.queryStructName}}AttrMap{{.dbDriverStr}}(),
+		colsMap: getQE{{.queryStructName}}ColsMap{{.dbDriverStr}}(),
 	}, nil
 }

@@ -54,14 +54,14 @@ func (spec DriverSpec) Open(dbSetting *sqldb.DBSetting) *sql.DB {
 	return db
 }
 
-func (spec DriverSpec) BuildFinderCursorQuery(cursorID string, isPrevNav bool, baseQuery string, finderOptionCursor repository.FinderOptionCursor, whereRaws []string, attrMap *sqldb.AttrMap) (string, []interface{}, error) {
+func (spec DriverSpec) BuildFinderCursorQuery(cursorID string, isPrevNav bool, baseQuery string, finderOptionCursor repository.FinderOptionCursor, whereRaws []string, colsMap *sqldb.ColsMap) (string, []interface{}, error) {
 	var args []interface{}
 	var bbBuilder strings.Builder
 	z := int(1)
 	if len(finderOptionCursor.Filters) > 0 {
 		for _, qFilter := range finderOptionCursor.Filters {
 			if fType, ok := filterType[qFilter.Type]; ok {
-				if fCol, ok := attrMap.Cols[qFilter.Attr]; ok {
+				if fCol, ok := colsMap.Cols[qFilter.Attr]; ok {
 					if fType == "like" { // atomic ops !! =================================
 						bbBuilder.WriteString("(" + fCol + " LIKE $" + strconv.Itoa(z) +") AND")
 						args = append(args, "%"+qFilter.Val+"%")
@@ -75,7 +75,7 @@ func (spec DriverSpec) BuildFinderCursorQuery(cursorID string, isPrevNav bool, b
 		}
 	}
 
-	keyCol, ok := attrMap.Cols[attrMap.KeyAttr]
+	keyCol, ok := colsMap.Cols[colsMap.KeyAttr]
 	if !ok {
 		return "", nil, fmt.Errorf("key attr not defined")
 	}
@@ -104,8 +104,8 @@ func (spec DriverSpec) BuildFinderCursorQuery(cursorID string, isPrevNav bool, b
 		var oKey bool
 		for _, qOrder := range finderOptionCursor.Orders {
 			if oType, ok := orderType[qOrder.Type]; ok {
-				if oCol, ok := attrMap.Cols[qOrder.Attr]; ok {
-					if qOrder.Attr == attrMap.KeyAttr {
+				if oCol, ok := colsMap.Cols[qOrder.Attr]; ok {
+					if qOrder.Attr == colsMap.KeyAttr {
 						keyOrder := "ASC"
 						if isPrevNav {
 							keyOrder = "DESC"

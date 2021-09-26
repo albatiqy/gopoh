@@ -19,12 +19,12 @@ import (
 var (
 	//go:embed _embed/qe-contr.txt
 	txtQEContr string
-	//go:embed _embed/qe-attrmap-mysql.txt
-	txtQEAttrMapMysql string
-	//go:embed _embed/qe-attrmap-postgres.txt
-	txtQEAttrMapPostgres string
-	//go:embed _embed/qe-structmap.txt
-	txtQEStructMap string
+	//go:embed _embed/qe-colsmap-mysql.txt
+	txtQEColsMapMysql string
+	//go:embed _embed/qe-colsmap-postgres.txt
+	txtQEColsMapPostgres string
+	//go:embed _embed/qe-fieldsmap.txt
+	txtQEFieldsMap string
 	//go:embed _embed/qe-impl-mysql.txt
 	txtQEImplMysql string
 	//go:embed _embed/qe-impl-postgres.txt
@@ -88,7 +88,7 @@ func (obj QueryDef) Generate(pathPrjDir, fName, dbDriver string) { // harus diha
 		log.Fatal("QueryDef.Generate: file sudah ada") //====================
 	}
 
-	fnameAttrMap := filepath.Join(pathRepositoryDir, lowerQueryName+"-qe-attrmap-"+lowerDbDriver+".go")
+	fnameColsMap := filepath.Join(pathRepositoryDir, lowerQueryName+"-qe-colsmap-"+lowerDbDriver+".go")
 	fnameImpl := filepath.Join(pathRepositoryDir, lowerQueryName+"-qe-"+lowerDbDriver+".go")
 
 	fnameQCmd := filepath.Join(pathPrjDir, "_APPFS_/gopoh-gen/db-target", lowerDbDriver, fName+".go")
@@ -202,10 +202,10 @@ func (obj QueryDef) Generate(pathPrjDir, fName, dbDriver string) { // harus diha
 		strFieldsQ       []string
 		importsQE        []string
 		importsImpl      []string
-		importsAttrMap   []string
+		importsColsMap   []string
 		useImportQE      = map[string]string{}
 		useImportImpl    = map[string]string{}
-		useImportAttrMap = map[string]string{}
+		useImportColsMap = map[string]string{}
 	)
 
 	genDriver := driver.Get(dbDriver)
@@ -320,40 +320,40 @@ func (obj QueryDef) Generate(pathPrjDir, fName, dbDriver string) { // harus diha
 		"keyType":               keyType,
 	}
 
-	var txtQEImpl, txtQEAttrMap string
+	var txtQEImpl, txtQEColsMap string
 	switch dbDriver {
 	case "mysql":
 		txtQEImpl = txtQEImplMysql
-		txtQEAttrMap = txtQEAttrMapMysql
+		txtQEColsMap = txtQEColsMapMysql
 	case "postgres":
 		txtQEImpl = txtQEImplPostgres
-		txtQEAttrMap = txtQEAttrMapPostgres
+		txtQEColsMap = txtQEColsMapPostgres
 	}
 
 	util.WriteTplFile(fnameImpl, txtQEImpl, tplDataImpl)
 
-	for impk, impv := range useImportAttrMap {
+	for impk, impv := range useImportColsMap {
 		if impv != "" {
-			importsAttrMap = append(importsAttrMap, "\t\""+impv+`"`)
+			importsColsMap = append(importsColsMap, "\t\""+impv+`"`)
 		} else {
 			if impl, ok := util.ImportsMap[impk]; ok {
-				importsAttrMap = append(importsAttrMap, "\t\""+impl+`"`)
+				importsColsMap = append(importsColsMap, "\t\""+impl+`"`)
 			}
 		}
 	}
 
-	tplDataAttrMap := map[string]string{
+	tplDataColsMap := map[string]string{
 		"maps":            strings.Join(strMap, "\n"),
-		"imports":         strings.Join(importsAttrMap, "\n"),
+		"imports":         strings.Join(importsColsMap, "\n"),
 		"queryStructName": queryStructName,
 		"keyAttr":         keyAttr,
 		"dbDriverStr":     dbDriverStr,
 	}
 
-	util.WriteTplFile(fnameAttrMap, txtQEAttrMap, tplDataAttrMap)
+	util.WriteTplFile(fnameColsMap, txtQEColsMap, tplDataColsMap)
 }
 
-func (obj QueryDef) GenerateStructMap(pathPrjDir string) {
+func (obj QueryDef) GenerateFieldsMap(pathPrjDir string) {
 	modName := util.GetModName(pathPrjDir)
 	if modName == "" {
 		log.Fatal("direktori project tidak valid")
@@ -380,16 +380,12 @@ func (obj QueryDef) GenerateStructMap(pathPrjDir string) {
 
 	lowerQueryName := strings.ToLower(obj.QueryName)
 
-	fnameMap := filepath.Join(pathServiceDir, lowerQueryName+"-qe-structmap.go")
+	fnameMap := filepath.Join(pathServiceDir, lowerQueryName+"-qe-fieldsmap.go")
 	if fs.FileInfo(fnameMap) != nil {
 		log.Fatal("QueryDef.Generate: file sudah ada") //====================
 	}
 
 	keyAttr1 := obj.QueryEntities[0].EntityDef.KeyAttr
-	keyStructField := ""
-	if keyAttrField, ok := obj.QueryEntities[0].EntityDef.FieldDefs[keyAttr1]; ok {
-		keyStructField = keyAttrField.StructField
-	}
 
 	tableSelectDefs := make([]driver.TableSelectDef, qeLen)
 
@@ -476,8 +472,8 @@ func (obj QueryDef) GenerateStructMap(pathPrjDir string) {
 
 	fieldLen := len(pickedFields)
 
-	strStructMap := make([]string, fieldLen)
-	strLabelMap := make([]string, fieldLen)
+	strFieldsMap := make([]string, fieldLen)
+	strLabelsMap := make([]string, fieldLen)
 
 	var (
 		importsMap   []string
@@ -488,16 +484,16 @@ func (obj QueryDef) GenerateStructMap(pathPrjDir string) {
 		if int(field.Ordinal) == keyIdx {
 			switch field.Type.(type) {
 			case *uint64, *uint32, *uint, *int64, *int32, *int:
-				strStructMap[field.Ordinal] = "\t\t\t\"" + field.StructField + "String\": \"" + newAttr + "\", // hati-hati konversi"
-				strLabelMap[field.Ordinal] = "\t\t\t\"" + field.StructField + "String\": \"" + field.Label + "\", // hati-hati konversi"
+				strFieldsMap[field.Ordinal] = "\t\t\t\"" + newAttr + "\": \"" + field.StructField + "String\", // hati-hati konversi"
+				strLabelsMap[field.Ordinal] = "\t\t\t\"" + field.StructField + "String\": \"" + field.Label + "\", // hati-hati konversi"
 				warningText = "warning id convertion exists===================================="
 			default:
-				strStructMap[field.Ordinal] = "\t\t\t\"" + field.StructField + "\": \"" + newAttr + "\","
-				strLabelMap[field.Ordinal] = "\t\t\t\"" + field.StructField + "\": \"" + field.Label + "\","
+				strFieldsMap[field.Ordinal] = "\t\t\t\"" + newAttr + "\": \"" + field.StructField + "\","
+				strLabelsMap[field.Ordinal] = "\t\t\t\"" + field.StructField + "\": \"" + field.Label + "\","
 			}
 		} else {
-			strStructMap[field.Ordinal] = "\t\t\t\"" + field.StructField + "\": \"" + newAttr + "\","
-			strLabelMap[field.Ordinal] = "\t\t\t\"" + field.StructField + "\": \"" + field.Label + "\","
+			strFieldsMap[field.Ordinal] = "\t\t\t\"" + newAttr + "\": \"" + field.StructField + "\","
+			strLabelsMap[field.Ordinal] = "\t\t\t\"" + field.StructField + "\": \"" + field.Label + "\","
 		}
 	}
 
@@ -516,13 +512,13 @@ func (obj QueryDef) GenerateStructMap(pathPrjDir string) {
 	}
 
 	tplDataMap := map[string]string{
-		"structMap":       strings.Join(strStructMap, "\n"),
-		"labelMap":        strings.Join(strLabelMap, "\n"),
+		"fieldsMap":       strings.Join(strFieldsMap, "\n"),
+		"labelsMap":        strings.Join(strLabelsMap, "\n"),
 		"imports":         strings.Join(importsMap, "\n"),
 		"queryStructName": queryStructName,
-		"keyStructField":  keyStructField,
+		"keyAttr":  keyAttr,
 		"warningText":     warningText,
 	}
 
-	util.WriteTplFile(fnameMap, txtQEStructMap, tplDataMap)
+	util.WriteTplFile(fnameMap, txtQEFieldsMap, tplDataMap)
 }

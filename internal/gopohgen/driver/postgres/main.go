@@ -130,7 +130,7 @@ func (d Driver) ReadTable(tblName string, db *sql.DB) (*driver.TableData, error)
 			} else {
 				ftype = "string"
 			}
-		case "time", "timetz": // time, smalldatetime // tz??
+		case "time", "timetz", "timestamp": // time, smalldatetime // tz??
 			if nullable {
 				ftype = "null.Time"
 				useImport["null"] = ""

@@ -1,17 +1,35 @@
 package service
 
 import (
-	"fmt"
-
-	"github.com/albatiqy/gopoh/contract/validation"
 	"github.com/albatiqy/gopoh/contract/log"
+	"github.com/albatiqy/gopoh/contract/validation"
 )
 
-var (
-	ErrNoRecords    = fmt.Errorf("")
-	ErrInvalidInput = fmt.Errorf("")
-	ErrInternal     = fmt.Errorf("")
+type ServiceErrCode int
+
+const (
+	ErrNoRecords = ServiceErrCode(iota)
+	ErrInternal
+	ErrInvalidInput
 )
+
+type ServiceError struct {
+	message string
+	err error
+	code ServiceErrCode
+}
+
+func (se ServiceError) Error() string {
+	return se.message
+}
+
+func (se ServiceError) Unwrap() error {
+	return se.err
+}
+
+func (se ServiceError) ErrCode() ServiceErrCode {
+	return se.code
+}
 
 type validationError struct {
 	message string
@@ -25,21 +43,25 @@ func (o validationError) ValidationMessages() map[string][]string {
 	return nil
 }
 
-type eFieldLabel struct {
-	lc        string
-	labels    map[string]string
+type eFieldsLabel struct {
+	lc     string
+	labels map[string]string
 }
 
-func (l eFieldLabel) GetLabel(structField string) string {
+func (l eFieldsLabel) GetLabel(structField string) string {
 	if label, ok := l.labels[structField]; ok {
 		return label
 	}
 	return structField
 }
 
-func newError(message string) error {
+func newInternalError(message string, err error) error {
 	log.Warning("internal error: ", message)
-	return ErrInternal
+	return ServiceError{
+		message: message,
+		code: ErrInternal,
+		err: err,
+	}
 }
 
 func newValidationError(message string) validation.ValidationError {
