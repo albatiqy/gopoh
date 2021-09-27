@@ -89,6 +89,6 @@ func (w e{{.entityStructName}}Writer{{.dbDriverStr}}) Delete(ctx context.Context
 func NewE{{.entityStructName}}Writer{{.dbDriverStr}}(conn *sqldb.Conn, reader core.Q{{.entityStructName}}Reader) (core.E{{.entityStructName}}Writer, error) {
 	return &e{{.entityStructName}}Writer{{.dbDriverStr}}{
 		conn:   conn,
-		reader: reader.(q{{.entityStructName}}Reader{{.dbDriverStr}}),
+		reader: reader.(q{{.entityStructName}}Reader{{.dbDriverStr}}), // handle assert error
 	}, nil
 }

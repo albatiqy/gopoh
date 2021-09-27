@@ -14,6 +14,7 @@ type q{{.queryStructName}}Reader{{.dbDriverStr}} struct {
 }
 
 func (r q{{.queryStructName}}Reader{{.dbDriverStr}}) CursorFindAll(ctx context.Context, finderOptionCursor gopohRepo.FinderOptionCursor) ([]core.Q{{.queryStructName}}, *gopohRepo.CursorData, error) {
+	// LEFT JOIN !!
 	qBuilder := r.conn.NewFinderCursorQueryBuilder(
 		"{{.sqlSelectAll}}",
 		finderOptionCursor, r.colsMap){{if ne .whereSoftDelete ""}}
@@ -74,6 +75,7 @@ func (r q{{.queryStructName}}Reader{{.dbDriverStr}}) CursorFindAll(ctx context.C
 
 func (r q{{.queryStructName}}Reader{{.dbDriverStr}}) GetByID(ctx context.Context, {{.varKeyName}} {{.keyType}}) (*core.E{{.queryStructName}}, error) {
 	record := core.E{{.queryStructName}}{}
+	// LEFT JOIN !!
 	if err := r.conn.QueryRowContext(ctx,
 		"{{.sqlSelectByID}}",
 		{{.varKeyName}},

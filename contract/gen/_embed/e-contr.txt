@@ -9,7 +9,7 @@ import (
 	// gopohRepo "github.com/albatiqy/gopoh/contract/repository"
 )
 
-type E{{.entityStructName}}Input struct {
+type E{{.entityStructName}}Input struct { // harus subset dari E{{.entityStructName}}!
 {{.fieldsInput}}
 }
 
