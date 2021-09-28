@@ -16,9 +16,9 @@ type {{.entityStructName}}Service struct {
 	fieldsLabel gopoh.FieldsLabel
 }
 
+// [@service]
 func (svc {{.entityStructName}}Service) Store(ctx context.Context, input core.E{{.entityStructName}}Input) (*core.E{{.entityStructName}}, error) {
-	var err error
-	if ctx, err = svc.gate.RequireKey(ctx); err != nil {
+	if err := svc.gate.RequireRole(ctx, "{{.entityStructName}}Service.Store"); err != nil {
 		return nil, err
 	}
 
@@ -42,9 +42,9 @@ func (svc {{.entityStructName}}Service) Store(ctx context.Context, input core.E{
 	return record, nil
 }
 
+// [@service]
 func (svc {{.entityStructName}}Service) Update(ctx context.Context, input core.E{{.entityStructName}}Input, i{{.keyStructField}} interface{}) (*core.E{{.entityStructName}}, error) {
-	var err error
-	if ctx, err = svc.gate.RequireKey(ctx); err != nil {
+	if err := svc.gate.RequireRole(ctx, "{{.entityStructName}}Service.Update"); err != nil {
 		return nil, err
 	}
 
@@ -71,9 +71,9 @@ func (svc {{.entityStructName}}Service) Update(ctx context.Context, input core.E
 	return record, nil
 }
 
+// [@service]
 func (svc {{.entityStructName}}Service) Delete(ctx context.Context, i{{.keyStructField}} interface{}) error {
-	var err error
-	if ctx, err = svc.gate.RequireKey(ctx); err != nil {
+	if err := svc.gate.RequireRole(ctx, "{{.entityStructName}}Service.Delete"); err != nil {
 		return err
 	}
 
@@ -100,9 +100,9 @@ func (svc {{.entityStructName}}Service) Delete(ctx context.Context, i{{.keyStruc
 	return nil
 }
 
+// [@service]
 func (svc {{.entityStructName}}Service) GetByID(ctx context.Context, i{{.keyStructField}} interface{}) (*core.E{{.entityStructName}}, error) {
-	var err error
-	if ctx, err = svc.gate.RequireKey(ctx); err != nil {
+	if err := svc.gate.RequireRole(ctx, "{{.entityStructName}}Service.GetByID"); err != nil {
 		return nil, err
 	}
 
@@ -119,9 +119,9 @@ func (svc {{.entityStructName}}Service) GetByID(ctx context.Context, i{{.keyStru
 	return record, nil
 }
 
+// [@service]
 func (svc {{.entityStructName}}Service) FindAll(ctx context.Context, finderOptionCursor gopohRepo.FinderOptionCursor) ([]core.Q{{.entityStructName}}, *gopohRepo.CursorData, error) {
-	var err error
-	if ctx, err = svc.gate.RequireKey(ctx); err != nil {
+	if err := svc.gate.RequireRole(ctx, "{{.entityStructName}}Service.FindAll"); err != nil {
 		return nil, nil, err
 	}
 

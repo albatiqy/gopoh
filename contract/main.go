@@ -18,7 +18,8 @@ type GateError interface {
 }
 
 type Gate interface {
-	RequireKey(ctx context.Context) (context.Context, error)
+	RequireAuth(ctx context.Context) error
+	RequireRole(ctx context.Context, roleName string) error
 	Forbidden(message string) error
 }
 
