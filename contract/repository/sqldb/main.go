@@ -13,11 +13,7 @@ var (
 
 type DBSetting struct {
 	DriverName string
-	Host       string
-	Port       uint
-	User       string
-	Passwd     string
-	Database   string
+	DSN        string
 }
 
 type DriverSpec interface {
@@ -90,9 +86,9 @@ func NewConn(dbSetting *DBSetting) *Conn {
 	db := spec.Open(dbSetting)
 
 	/*
-	if err := db.Ping(); err != nil {
-		return nil
-	}
+		if err := db.Ping(); err != nil {
+			return nil
+		}
 	*/
 
 	return &Conn{

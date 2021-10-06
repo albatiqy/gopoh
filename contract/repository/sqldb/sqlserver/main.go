@@ -1,4 +1,4 @@
-package mysql
+package sqlserver
 
 import (
 	"database/sql"
@@ -6,19 +6,21 @@ import (
 	"strconv"
 	"strings"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/denisenkom/go-mssqldb"
 
-	"github.com/albatiqy/gopoh/contract/log"
 	"github.com/albatiqy/gopoh/contract/repository"
 	"github.com/albatiqy/gopoh/contract/repository/sqldb"
+
+	// "github.com/albatiqy/gopoh/pkg/lib/env"
+	"github.com/albatiqy/gopoh/contract/log"
 )
 
 type DriverSpec struct {
 }
 
 func init() {
-	sqldb.DriversSpec["mysql"] = DriverSpec{}
-	log.Debugf("sqldb: %s", "mysql driver initialized")
+	sqldb.DriversSpec["sqlserver"] = DriverSpec{}
+	log.Debugf("sqldb: %s", "sqlserver driver initialized")
 }
 
 var (
@@ -37,18 +39,25 @@ var (
 	}
 )
 
-// dsn := "user:pass@tcp(127.0.0.1:3306)/dbname?charset=utf8mb4&parseTime=True&loc=Local"
-// db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+// dsn := "sqlserver://gorm:LoremIpsum86@localhost:9930?database=gorm"
+// db, err := gorm.Open(sqlserver.Open(dsn), &gorm.Config{})
 
 func (spec DriverSpec) Open(dbSetting *sqldb.DBSetting) *sql.DB {
 
-	//DSN: "user:password@/database?parseTime=true&loc=UTC"
+	// sqlserver://sa:mypass@localhost:1234?database=master&connection+timeout=30
+	// sqlserver://sa:my%7Bpass@somehost?connection+timeout=30
 
-	db, err := sql.Open("mysql", dbSetting.DSN)
+	//DSN: "sqlserver://@host/instance?database=database&connection+timeout=30&parseTime=true&loc=UTC"
+
+	db, err := sql.Open("sqlserver", dbSetting.DSN)
 	if err != nil {
 		log.Debugf(`sqldb: %s`, err)
 		return nil
 	}
+
+	// db.SetMaxOpenConns(25)
+	// db.SetMaxIdleConns(25)
+	// db.SetConnMaxLifetime(5*time.Minute)
 
 	return db
 }
@@ -56,17 +65,19 @@ func (spec DriverSpec) Open(dbSetting *sqldb.DBSetting) *sql.DB {
 func (spec DriverSpec) BuildFinderCursorQuery(cursorID string, isPrevNav bool, baseQuery string, finderOptionCursor repository.FinderOptionCursor, whereRaws []string, colsMap *sqldb.ColsMap) (string, []interface{}, error) {
 	var args []interface{}
 	var bbBuilder strings.Builder
+	z := int(1)
 	if len(finderOptionCursor.Filters) > 0 {
 		for _, qFilter := range finderOptionCursor.Filters {
 			if fType, ok := filterType[qFilter.Type]; ok {
 				if fCol, ok := colsMap.Cols[qFilter.Attr]; ok {
 					if fType == "like" { // atomic ops !! =================================
-						bbBuilder.WriteString("(" + fCol + " LIKE ?) AND")
+						bbBuilder.WriteString("(" + fCol + " LIKE $" + strconv.Itoa(z) +") AND")
 						args = append(args, "%"+qFilter.Val+"%")
 					} else {
-						bbBuilder.WriteString("(" + fCol + fType + "?) AND")
-						args = append(args, qFilter.Val)
+						bbBuilder.WriteString("(" + fCol + fType + "$" + strconv.Itoa(z) +") AND")
+						args = append(args, qFilter.Val) // sync args and z???
 					}
+					z++
 				}
 			}
 		}
@@ -79,11 +90,12 @@ func (spec DriverSpec) BuildFinderCursorQuery(cursorID string, isPrevNav bool, b
 
 	if cursorID != "" {
 		if isPrevNav { // atomic===============================
-			whereRaws = append(whereRaws, keyCol+" < ?")
+			whereRaws = append(whereRaws, keyCol+" < $" + strconv.Itoa(z))
 		} else {
-			whereRaws = append(whereRaws, keyCol+" > ?")
+			whereRaws = append(whereRaws, keyCol+" > $" + strconv.Itoa(z))
 		}
 		args = append(args, cursorID)
+		z++
 	}
 
 	for _, where := range whereRaws {
@@ -135,7 +147,7 @@ func (spec DriverSpec) BuildFinderCursorQuery(cursorID string, isPrevNav bool, b
 		baseQuery += " ORDER BY " + keyCol + " " + keyOrder
 	}
 
-	baseQuery += " LIMIT 0," + strconv.FormatUint(uint64(finderOptionCursor.PageSize+1), 10)
+	baseQuery += " LIMIT " + strconv.FormatUint(uint64(finderOptionCursor.PageSize+1), 10) + " OFFSET 0"
 
 	return baseQuery, args, nil
 }

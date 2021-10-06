@@ -12,9 +12,10 @@ import (
 
 var (
 	ImportsMap = map[string]string{
-		"time":    "time",
-		"strconv": "strconv",
-		"null":    "github.com/albatiqy/gopoh/pkg/lib/null",
+		"time":      "time",
+		"strconv":   "strconv",
+		"null":      "github.com/albatiqy/gopoh/pkg/lib/null",
+		"sqlserver": "github.com/albatiqy/gopoh/contract/repository/sqldb/sqlserver",
 	}
 )
 

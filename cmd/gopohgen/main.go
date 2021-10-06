@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/mitchellh/cli"
@@ -179,18 +178,8 @@ func getDBSetting(envKey string) *sqldb.DBSetting {
 	}
 
 	setting := &sqldb.DBSetting{
-		Host:       os.Getenv("DB_" + envKey + "_HOST"),
-		User:       os.Getenv("DB_" + envKey + "_USER"),
-		Passwd:     os.Getenv("DB_" + envKey + "_PASSWORD"),
-		Database:   os.Getenv("DB_" + envKey + "_DATABASE"),
+		DSN:        os.Getenv("DB_" + envKey + "_DSN"),
 		DriverName: driverName,
-	}
-
-	str := os.Getenv("DB_" + envKey + "_PORT")
-	if str != "" {
-		if val, err := strconv.ParseUint(str, 10, 64); err == nil {
-			setting.Port = uint(val)
-		}
 	}
 
 	return setting

@@ -11,7 +11,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -137,11 +136,7 @@ func init() {
 
 type dbSetting struct {
 	DriverName string
-	Host       string
-	Port       uint
-	User       string
-	Passwd     string
-	Database   string
+	DSN       string
 }
 
 type configuration struct {
@@ -179,19 +174,10 @@ func (cfg *configuration) getDBSetting(envKey string) *dbSetting {
 		}
 
 		setting = &dbSetting{
-			Host:       os.Getenv("DB_" + envKey + "_HOST"),
-			User:       os.Getenv("DB_" + envKey + "_USER"),
-			Passwd:     os.Getenv("DB_" + envKey + "_PASSWORD"),
-			Database:   os.Getenv("DB_" + envKey + "_DATABASE"),
+			DSN:       os.Getenv("DB_" + envKey + "_DSN"),
 			DriverName: driverName,
 		}
 
-		str := os.Getenv("DB_" + envKey + "_PORT")
-		if str != "" {
-			if val, err := strconv.ParseUint(str, 10, 64); err == nil {
-				setting.Port = uint(val)
-			}
-		}
 		cfg.dbSettings[envKey] = setting
 	}
 	return setting
@@ -210,7 +196,7 @@ func (cfg *configuration) getPostgresDB(envKey string) *sql.DB {
 		return nil
 	}
 	// Use DSN string to open
-	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=UTC", dbSetting.Host, dbSetting.Port, dbSetting.User, dbSetting.Passwd, dbSetting.Database))
+	db, err := sql.Open("postgres", dbSetting.DSN)
 	if err != nil {
 		cfg.Ui.Warn(`sqldb: ` + err.Error())
 		return nil

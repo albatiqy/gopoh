@@ -40,9 +40,14 @@ var (
 	}
 )
 
+// dsn := "host=localhost user=gorm password=gorm dbname=gorm port=9920 sslmode=disable TimeZone=Asia/Shanghai"
+// db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+
 func (spec DriverSpec) Open(dbSetting *sqldb.DBSetting) *sql.DB {
-	// Use DSN string to open
-	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable TimeZone=UTC", dbSetting.Host, dbSetting.Port, dbSetting.User, dbSetting.Passwd, dbSetting.Database))
+
+	//DSN: "host=host port=port user=user password=password dbname=dbname sslmode=disabled TimeZone=UTC"
+
+	db, err := sql.Open("postgres", dbSetting.DSN)
 	if err != nil {
 		log.Debugf(`sqldb: %s`, err)
 		return nil
