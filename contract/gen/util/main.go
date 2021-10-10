@@ -15,7 +15,9 @@ var (
 		"time":      "time",
 		"strconv":   "strconv",
 		"null":      "github.com/albatiqy/gopoh/pkg/lib/null",
+		"decimal":   "github.com/albatiqy/gopoh/pkg/lib/decimal",
 		"sqlserver": "github.com/albatiqy/gopoh/contract/repository/sqldb/sqlserver",
+		"mysql":     "github.com/albatiqy/gopoh/contract/repository/sqldb/mysql",
 	}
 )
 

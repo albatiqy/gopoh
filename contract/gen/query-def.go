@@ -203,6 +203,8 @@ func (obj QueryDef) Generate(pathPrjDir, fName, dbDriver string) { // harus diha
 		importsQE        []string
 		importsImpl      []string
 		importsColsMap   []string
+		qTimeLocalA      []string
+		eTimeLocalA      []string
 		useImportQE      = map[string]string{}
 		useImportImpl    = map[string]string{}
 		useImportColsMap = map[string]string{}
@@ -242,6 +244,8 @@ func (obj QueryDef) Generate(pathPrjDir, fName, dbDriver string) { // harus diha
 				useImportQE["time"] = ""
 				fieldScansQ[field.Ordinal] = "\t\t\t&record." + field.StructField + ", // warning from UTC result"
 				fieldScansQByID[field.Ordinal] = "\t\t&record." + field.StructField + ", // warning from UTC result"
+				qTimeLocalA = append(qTimeLocalA, "\t\trecord."+field.StructField+" = record."+field.StructField+".Local() // convert to local")
+				eTimeLocalA = append(eTimeLocalA, "\t\trecord."+field.StructField+" = record."+field.StructField+".Local() // convert to local")
 			default:
 				fieldScansQ[field.Ordinal] = "\t\t\t&record." + field.StructField + ","
 				fieldScansQByID[field.Ordinal] = "\t\t&record." + field.StructField + ","
@@ -308,7 +312,9 @@ func (obj QueryDef) Generate(pathPrjDir, fName, dbDriver string) { // harus diha
 		"imports":               strings.Join(importsImpl, "\n"),
 		"queryStructName":       queryStructName,
 		"fieldScansQ":           strings.Join(fieldScansQ, "\n"),
+		"qTimeLocal":            strings.Join(qTimeLocalA, "\n"),
 		"fieldScansQByID":       strings.Join(fieldScansQByID, "\n"),
+		"eTimeLocal":            strings.Join(eTimeLocalA, "\n"),
 		"sqlSelectAll":          sqlSelectAll,
 		"sqlSelectByID":         sqlSelectByID,
 		"whereSoftDelete":       softDeleteSelectAll,
@@ -513,10 +519,10 @@ func (obj QueryDef) GenerateFieldsMap(pathPrjDir string) {
 
 	tplDataMap := map[string]string{
 		"fieldsMap":       strings.Join(strFieldsMap, "\n"),
-		"labelsMap":        strings.Join(strLabelsMap, "\n"),
+		"labelsMap":       strings.Join(strLabelsMap, "\n"),
 		"imports":         strings.Join(importsMap, "\n"),
 		"queryStructName": queryStructName,
-		"keyAttr":  keyAttr,
+		"keyAttr":         keyAttr,
 		"warningText":     warningText,
 	}
 

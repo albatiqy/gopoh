@@ -32,7 +32,7 @@ type rawField struct {
 type Driver struct {
 }
 
-func (d Driver) ReadTable(tblName string, db *sql.DB) (*driver.TableData, error) {
+func (d Driver) ReadTable(tblName, keyCol string, db *sql.DB) (*driver.TableData, error) {
 	fields := make(map[string]rawField)
 
 	rows, err := db.Query(fmt.Sprintf(`
@@ -44,12 +44,13 @@ func (d Driver) ReadTable(tblName string, db *sql.DB) (*driver.TableData, error)
 	}
 	defer rows.Close()
 
-	type primaryKey struct {
-		ColumnName string
-		DataType   string
-	}
+	if keyCol == "" {
+		type primaryKey struct {
+			ColumnName string
+			DataType   string
+		}
 
-	rows1, err := db.Query(fmt.Sprintf(`
+		rows1, err := db.Query(fmt.Sprintf(`
 	SELECT
 	pg_attribute.attname,
 	format_type(pg_attribute.atttypid, pg_attribute.atttypmod)
@@ -62,28 +63,26 @@ func (d Driver) ReadTable(tblName string, db *sql.DB) (*driver.TableData, error)
 	pg_attribute.attrelid = pg_class.oid AND
 	pg_attribute.attnum = any(pg_index.indkey)
 	AND indisprimary`,
-		tblName))
-	if err != nil {
-		return nil, err
-	}
-	defer rows1.Close()
-
-	var primaryKeys []primaryKey
-	for rows1.Next() {
-		pk := primaryKey{}
-		err := rows1.Scan(&pk.ColumnName, &pk.DataType)
+			tblName))
 		if err != nil {
 			return nil, err
 		}
-		primaryKeys = append(primaryKeys, pk)
-	}
+		defer rows1.Close()
 
-	if len(primaryKeys) == 0 {
-		log.Fatal("primary key tidak ditemukan")
-	}
-
-	if len(primaryKeys) > 1 {
-		log.Fatal("primary key lebih dari 1")
+		var primaryKeys []primaryKey
+		for rows1.Next() {
+			pk := primaryKey{}
+			err := rows1.Scan(&pk.ColumnName, &pk.DataType)
+			if err != nil {
+				return nil, err
+			}
+			primaryKeys = append(primaryKeys, pk)
+		}
+		if len(primaryKeys) == 1 {
+			keyCol = primaryKeys[0].ColumnName
+		} else {
+			return nil, fmt.Errorf("primary key tidak ditemukan atau lebih dari 1")
+		}
 	}
 
 	ordinal := uint16(0)
@@ -100,7 +99,6 @@ func (d Driver) ReadTable(tblName string, db *sql.DB) (*driver.TableData, error)
 
 	colsData := make([]driver.ColData, len(fields))
 
-	keyCol := ""
 	keyAuto := false
 	softDelete := false
 	useImport := map[string]string{}
@@ -154,19 +152,10 @@ func (d Driver) ReadTable(tblName string, db *sql.DB) (*driver.TableData, error)
 			}
 		default:
 			{
-				log.Fatal("type " + field.UDTName + " tidak terdefinisi")
+				return nil, fmt.Errorf("type " + field.DataType + " tidak terdefinisi")
 			}
 		}
-		if keyCol == "" {
-			if primaryKeys[0].ColumnName == field.ColumnName {
-				keyCol = field.ColumnName
-				/*
-					if strings.Contains(field.Extra, "AUTO_INCREMENT") {
-						keyAuto = true
-					}
-				*/
-			}
-		}
+
 		if field.ColumnName == softDeleteCol {
 			softDelete = true
 		}

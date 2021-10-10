@@ -11,6 +11,7 @@ import (
 	// semua driver import dulu
 	_ "github.com/albatiqy/gopoh/contract/gen/driver/mysql"
 	_ "github.com/albatiqy/gopoh/contract/gen/driver/postgres"
+	_ "github.com/albatiqy/gopoh/contract/gen/driver/sqlserver"
 )
 
 var (

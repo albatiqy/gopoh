@@ -44,8 +44,7 @@ type rawField struct {
 type Driver struct {
 }
 
-func (d Driver) ReadTable(tblName string, db *sql.DB) (*driver.TableData, error) {
-
+func (d Driver) ReadTable(tblName, keyCol string, db *sql.DB) (*driver.TableData, error) {
 	var tblSchema string
 	if schema := strings.Split(tblName, "."); len(schema) != 2 {
 		return nil, fmt.Errorf("tblName harus mengandung schema ex: schema.nama_tabel")
@@ -58,7 +57,7 @@ func (d Driver) ReadTable(tblName string, db *sql.DB) (*driver.TableData, error)
 
 	rows, err := db.Query(fmt.Sprintf(`
 	SELECT TABLE_CATALOG,TABLE_SCHEMA,TABLE_NAME,COLUMN_NAME,ORDINAL_POSITION,COLUMN_DEFAULT,IS_NULLABLE,DATA_TYPE,CHARACTER_MAXIMUM_LENGTH,CHARACTER_OCTET_LENGTH,NUMERIC_PRECISION,NUMERIC_PRECISION_RADIX,NUMERIC_SCALE,DATETIME_PRECISION,CHARACTER_SET_CATALOG,CHARACTER_SET_SCHEMA,CHARACTER_SET_NAME,COLLATION_CATALOG,COLLATION_SCHEMA,COLLATION_NAME,DOMAIN_CATALOG,DOMAIN_SCHEMA,DOMAIN_NAME
-	FROM information_schema.columns
+	FROM INFORMATION_SCHEMA.columns
 	WHERE TABLE_NAME = '%s' AND TABLE_SCHEMA='%s'
 	ORDER BY ORDINAL_POSITION
 	`,
@@ -68,40 +67,41 @@ func (d Driver) ReadTable(tblName string, db *sql.DB) (*driver.TableData, error)
 	}
 	defer rows.Close()
 
-	type primaryKey struct {
-		ColumnName string
-	}
+	if keyCol == "" {
+		type primaryKey struct {
+			ColumnName string
+		}
 
-	rows1, err := db.Query(fmt.Sprintf(`
-	select C.COLUMN_NAME FROM
-	INFORMATION_SCHEMA.TABLE_CONSTRAINTS T
-	JOIN INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE C
-	ON C.CONSTRAINT_NAME=T.CONSTRAINT_NAME
-	WHERE
-	C.TABLE_NAME='%s' AND TABLE_SCHEMA='%s'
-	and T.CONSTRAINT_TYPE='PRIMARY KEY'`,
-		tblName, tblSchema))
-	if err != nil {
-		return nil, err
-	}
-	defer rows1.Close()
+		var primaryKeys []primaryKey
 
-	var primaryKeys []primaryKey
-	for rows1.Next() {
-		pk := primaryKey{}
-		err := rows1.Scan(&pk.ColumnName)
+		rows1, err := db.Query(fmt.Sprintf(`
+		select C.COLUMN_NAME FROM
+		INFORMATION_SCHEMA.TABLE_CONSTRAINTS T
+		JOIN INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE C
+		ON C.CONSTRAINT_NAME=T.CONSTRAINT_NAME
+		WHERE
+		C.TABLE_NAME='%s' and C.TABLE_SCHEMA='%s'
+		and T.CONSTRAINT_TYPE='PRIMARY KEY'`,
+			tblName, tblSchema))
 		if err != nil {
 			return nil, err
 		}
-		primaryKeys = append(primaryKeys, pk)
-	}
+		defer rows1.Close()
 
-	if len(primaryKeys) == 0 {
-		log.Fatal("primary key tidak ditemukan")
-	}
+		for rows1.Next() {
+			pk := primaryKey{}
+			err := rows1.Scan(&pk.ColumnName)
+			if err != nil {
+				return nil, err
+			}
+			primaryKeys = append(primaryKeys, pk)
+		}
 
-	if len(primaryKeys) > 1 {
-		log.Fatal("primary key lebih dari 1")
+		if len(primaryKeys) == 1 {
+			keyCol = primaryKeys[0].ColumnName
+		} else {
+			return nil, fmt.Errorf("primary key tidak ditemukan atau lebih dari 1")
+		}
 	}
 
 	ordinal := uint16(0)
@@ -118,7 +118,6 @@ func (d Driver) ReadTable(tblName string, db *sql.DB) (*driver.TableData, error)
 
 	colsData := make([]driver.ColData, len(fields))
 
-	keyCol := ""
 	keyAuto := false
 	softDelete := false
 	useImport := map[string]string{}
@@ -163,11 +162,20 @@ func (d Driver) ReadTable(tblName string, db *sql.DB) (*driver.TableData, error)
 			} else {
 				ftype = "int64"
 			}
-		/*
-			case "decimal":
-
-			case "real", "float":
-		*/
+		case "decimal":
+			if nullable {
+				ftype = "decimal.NullDecimal"
+			} else {
+				ftype = "decimal.Decimal"
+			}
+			useImport["decimal"] = ""
+		case "real", "float":
+			if nullable {
+				ftype = "null.Float64"
+				useImport["null"] = ""
+			} else {
+				ftype = "float64"
+			}
 		case "uniqueidentifier":
 			if nullable {
 				ftype = "sqlserver.NullUniqueIdentifier"
@@ -177,19 +185,10 @@ func (d Driver) ReadTable(tblName string, db *sql.DB) (*driver.TableData, error)
 			useImport["sqlserver"] = ""
 		default:
 			{
-				log.Fatal("type " + field.DataType + "tidak terdefinisi")
+				return nil, fmt.Errorf("type " + field.DataType + " tidak terdefinisi")
 			}
 		}
-		if keyCol == "" {
-			if primaryKeys[0].ColumnName == field.ColumnName {
-				keyCol = field.ColumnName
-				/*
-					if strings.Contains(field.Extra, "AUTO_INCREMENT") {
-						keyAuto = true
-					}
-				*/
-			}
-		}
+
 		if field.ColumnName == softDeleteCol {
 			softDelete = true
 		}

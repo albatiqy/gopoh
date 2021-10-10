@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"regexp"
 	"strings"
+	"fmt"
 
 	"github.com/albatiqy/gopoh/contract/log"
 	"github.com/albatiqy/gopoh/internal/gopohgen/driver"
@@ -31,7 +32,7 @@ type rawField struct {
 type Driver struct {
 }
 
-func (d Driver) ReadTable(tblName string, db *sql.DB) (*driver.TableData, error) {
+func (d Driver) ReadTable(tblName, keyCol string, db *sql.DB) (*driver.TableData, error) {
 	fields := make(map[string]rawField)
 
 	rows, err := db.Query("DESCRIBE " + tblName)
@@ -70,7 +71,6 @@ func (d Driver) ReadTable(tblName string, db *sql.DB) (*driver.TableData, error)
 
 	colsData := make([]driver.ColData, len(fields))
 
-	keyCol := ""
 	keyAuto := false
 	softDelete := false
 	useImport := map[string]string{}
@@ -132,7 +132,7 @@ func (d Driver) ReadTable(tblName string, db *sql.DB) (*driver.TableData, error)
 			ftype = "float64"
 		default:
 			{
-				log.Fatal("type " + field.DataType + "tidak terdefinisi")
+				return nil, fmt.Errorf("type " + field.DataType + " tidak terdefinisi")
 			}
 		}
 		if keyCol == "" {

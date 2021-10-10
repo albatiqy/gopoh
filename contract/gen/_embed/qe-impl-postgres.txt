@@ -45,7 +45,8 @@ func (r q{{.queryStructName}}Reader{{.dbDriverStr}}) CursorFindAll(ctx context.C
 	if err := rows.Err(); err != nil {
 		return nil, nil, err
 	}
-
+{{if ne .qTimeLocal ""}}
+{{.qTimeLocal}}{{end}}
 	qCursorData := &gopohRepo.CursorData{}
 
 	qBuilder.FillCursorData(qCursorData, len(records), func(itemsLen int, hasNext, isPrevNav bool) (string, string) {
@@ -84,7 +85,8 @@ func (r q{{.queryStructName}}Reader{{.dbDriverStr}}) GetByID(ctx context.Context
 	); err!=nil {
 		return nil, err
 	}
-
+{{if ne .eTimeLocal ""}}
+{{.eTimeLocal}}{{end}}
 	return &record, nil
 }
 

@@ -12,9 +12,13 @@ import (
 
 	"github.com/albatiqy/gopoh/contract/gen/util"
 	"github.com/albatiqy/gopoh/contract/repository/sqldb"
+	_ "github.com/albatiqy/gopoh/contract/repository/sqldb/mysql"
 	_ "github.com/albatiqy/gopoh/contract/repository/sqldb/postgres"
+	_ "github.com/albatiqy/gopoh/contract/repository/sqldb/sqlserver"
 	"github.com/albatiqy/gopoh/internal/gopohgen/driver"
+	_ "github.com/albatiqy/gopoh/internal/gopohgen/driver/mysql"
 	_ "github.com/albatiqy/gopoh/internal/gopohgen/driver/postgres"
+	_ "github.com/albatiqy/gopoh/internal/gopohgen/driver/sqlserver"
 	"github.com/albatiqy/gopoh/pkg/lib/env"
 	"github.com/albatiqy/gopoh/pkg/lib/fs"
 )
@@ -35,20 +39,23 @@ An nama_tabel must be specified.`)
 		os.Exit(1)
 	}
 
-	var dbEnvKey string
+	var dbEnvKey, keyCol string
 
-	tableName := os.Args[1]
-
+	// pastikan flag terlebih dahulu
 	flag.StringVar(&dbEnvKey, "d", "DEFAULT", "DB env key")
+	flag.StringVar(&keyCol, "k", "", "table primary column")
 	flag.Usage = func() {
 		ui.Output(`
 Usage: gopohgen nama_tabel [options]
 	Dispatches a custom event across the Serf cluster.
 Options:
 	-d=dbEnvKey             (default "DEFAULT")
+	-k=primaryKeyColumn             (default [blank])
 	`)
 	}
 	flag.Parse()
+
+	tableName := flag.Arg(0)
 
 	workingDir := fs.WorkingDir()
 
@@ -116,7 +123,7 @@ Options:
 
 	genDriver := driver.Get(dbDriver)
 
-	tableData, err := genDriver.ReadTable(tableName, dbConn.DB)
+	tableData, err := genDriver.ReadTable(tableName, keyCol, dbConn.DB)
 	if err != nil {
 		ui.Error(fmt.Sprintf("Error: %s", err))
 		os.Exit(1)

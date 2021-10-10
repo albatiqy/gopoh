@@ -9,7 +9,7 @@ import (
 var LoadedDrivers = make(map[string]interface{})
 
 type Driver interface {
-	ReadTable(tblName string, db *sql.DB) (*TableData, error)
+	ReadTable(tblName, keyCol string, db *sql.DB) (*TableData, error)
 }
 
 type ColData struct {
