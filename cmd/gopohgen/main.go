@@ -93,7 +93,9 @@ Options:
 		os.Exit(1)
 	}
 
-	nsName := dbEnvKey + "_" + tableName
+	nsTableName := strings.Replace(tableName, ".", "_", 1)
+
+	nsName := dbEnvKey + "_" + nsTableName
 	pathSaveRoot := filepath.Join(pathTableDef, nsName)
 	if success, err := fs.MkDirIfNotExists(pathSaveRoot); !success {
 		ui.Error(fmt.Sprintf("Error: %s", err))
@@ -145,6 +147,7 @@ Options:
 			"dbEnvKey":             dbEnvKey,
 			"dbDriver":             dbDriver,
 			"tableName":            tableName,
+			"entityName":           nsTableName,
 			"keyAttr":              tableData.KeyCol,
 			"keyAutoStr":           keyAutoStr,
 			"keyCanUpdateStr":      keyCanUpdateStr,

@@ -25,7 +25,7 @@ var (
 		KeyCanUpdate: {{.keyCanUpdateStr}},
 		SoftDelete: {{.softDeleteStr}},
 		// EntityAttrs: ,
-		EntityName: "{{.tableName}}", // lower case singular
+		EntityName: "{{.entityName}}", // lower case singular
 		OverridesLabel: map[string]string{
 {{.overridesLabel}}
 			},

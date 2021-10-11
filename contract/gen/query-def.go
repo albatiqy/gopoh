@@ -240,12 +240,19 @@ func (obj QueryDef) Generate(pathPrjDir, fName, dbDriver string) { // harus diha
 			}
 		} else {
 			switch field.Type.(type) {
-			case *time.Time, *null.Time:
+			case *time.Time:
 				useImportQE["time"] = ""
 				fieldScansQ[field.Ordinal] = "\t\t\t&record." + field.StructField + ", // warning from UTC result"
 				fieldScansQByID[field.Ordinal] = "\t\t&record." + field.StructField + ", // warning from UTC result"
 				qTimeLocalA = append(qTimeLocalA, "\t\trecord."+field.StructField+" = record."+field.StructField+".Local() // convert to local")
-				eTimeLocalA = append(eTimeLocalA, "\t\trecord."+field.StructField+" = record."+field.StructField+".Local() // convert to local")
+				eTimeLocalA = append(eTimeLocalA, "\trecord."+field.StructField+" = record."+field.StructField+".Local() // convert to local")
+			case *null.Time:
+				useImportQE["time"] = ""
+				fieldScansQ[field.Ordinal] = "\t\t\t&record." + field.StructField + ", // warning from UTC result"
+				fieldScansQByID[field.Ordinal] = "\t\t&record." + field.StructField + ", // warning from UTC result"
+				qTimeLocalA = append(qTimeLocalA, "\t\trecord."+field.StructField+" = null.NewTime(record."+field.StructField+".Time.Local(), record."+field.StructField+".Valid) // convert to local")
+				eTimeLocalA = append(eTimeLocalA, "\trecord."+field.StructField+" = null.NewTime(record."+field.StructField+".Time.Local(), record."+field.StructField+".Valid) // convert to local")
+
 			default:
 				fieldScansQ[field.Ordinal] = "\t\t\t&record." + field.StructField + ","
 				fieldScansQByID[field.Ordinal] = "\t\t&record." + field.StructField + ","

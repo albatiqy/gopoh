@@ -11,6 +11,7 @@ import (
 	"github.com/albatiqy/gopoh/contract/gen/driver"
 	"github.com/albatiqy/gopoh/contract/gen/util"
 	"github.com/albatiqy/gopoh/contract/log"
+	"github.com/albatiqy/gopoh/pkg/lib/decimal"
 	"github.com/albatiqy/gopoh/pkg/lib/fs"
 	"github.com/albatiqy/gopoh/pkg/lib/null"
 )
@@ -56,7 +57,9 @@ func (obj TableDef) GenerateDBTarget(pathPrjDir, dbDriver string) {
 		log.Fatal(err)
 	}
 
-	nsName := obj.DBEnvKey + "_" + obj.TableName
+	nsTableName := strings.Replace(obj.TableName, ".", "_", 1)
+
+	nsName := obj.DBEnvKey + "_" + nsTableName
 	fnameQuery := filepath.Join(pathSaveRoot, nsName+".go")
 
 	if obj.KeyAttr == "" {
@@ -104,6 +107,8 @@ func (obj TableDef) GenerateDBTarget(pathPrjDir, dbDriver string) {
 				useImport["time"] = ""
 			case *null.String:
 				useImport["null"] = ""
+			case *decimal.Decimal, *decimal.NullDecimal:
+				useImport["decimal"] = ""
 			}
 
 			overrideType := reflect.TypeOf(field.Type).Elem().String()
@@ -186,6 +191,7 @@ func (obj TableDef) GenerateDBTarget(pathPrjDir, dbDriver string) {
 		"imports":          strings.Join(imports, "\n"),
 		"nsName":           nsName,
 		"tableName":        obj.TableName,
+		"nsTableName":      nsTableName,
 		"entityName":       obj.EntityName,
 		"keyAttr":          newJsonKeyAttr,
 		"keyAutoStr":       keyAutoStr,

@@ -29,7 +29,7 @@ var (
 )
 
 func init() {
-	cmds["{{.tableName}}"] = func(flg *flag.FlagSet, args []string) {
+	cmds["{{.nsTableName}}"] = func(flg *flag.FlagSet, args []string) {
 		if len(args) < 1 {
 			fmt.Println("kurang perintah")
 			os.Exit(1)

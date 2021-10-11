@@ -59,6 +59,12 @@ func (cmd *buildrolesCmd) Run(args []string) int {
 
 	env.Load()
 
+
+
+	// init config
+
+
+
 	cfg := configuration{
 		AppFSRoot:  "./_APPFS_",
 		Ui:         cmd.Ui,
@@ -183,11 +189,13 @@ func (cfg *configuration) getDBSetting(envKey string) *dbSetting {
 	return setting
 }
 
+/*
 func readEnvKeyString(envKey string, cfgField *string) {
 	if val, ok := os.LookupEnv(envKey); ok {
 		*cfgField = val
 	}
 }
+*/
 
 func (cfg *configuration) getPostgresDB(envKey string) *sql.DB {
 	dbSetting := cfg.getDBSetting(envKey)

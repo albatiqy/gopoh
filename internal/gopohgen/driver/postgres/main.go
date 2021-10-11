@@ -136,6 +136,13 @@ func (d Driver) ReadTable(tblName, keyCol string, db *sql.DB) (*driver.TableData
 				ftype = "time.Time"
 				useImport["time"] = ""
 			}
+		case "int2": //smallint
+			if nullable {
+				ftype = "null.Int32"
+				useImport["null"] = ""
+			} else {
+				ftype = "int32"
+			}
 		case "int4":
 			if nullable {
 				ftype = "null.Int32"
@@ -150,9 +157,16 @@ func (d Driver) ReadTable(tblName, keyCol string, db *sql.DB) (*driver.TableData
 			} else {
 				ftype = "int64"
 			}
+		case "numeric":
+			if nullable {
+				ftype = "decimal.NullDecimal"
+			} else {
+				ftype = "decimal.Decimal"
+			}
+			useImport["decimal"] = ""
 		default:
 			{
-				return nil, fmt.Errorf("type " + field.DataType + " tidak terdefinisi")
+				return nil, fmt.Errorf("type " + field.UDTName + " tidak terdefinisi")
 			}
 		}
 

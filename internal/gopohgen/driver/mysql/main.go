@@ -2,9 +2,9 @@ package mysql
 
 import (
 	"database/sql"
+	"fmt"
 	"regexp"
 	"strings"
-	"fmt"
 
 	"github.com/albatiqy/gopoh/contract/log"
 	"github.com/albatiqy/gopoh/internal/gopohgen/driver"
@@ -89,15 +89,15 @@ func (d Driver) ReadTable(tblName, keyCol string, db *sql.DB) (*driver.TableData
 		switch field.DataType { // HANDLE NULL TYPE ===================================
 		case "varchar", "char":
 			if nullable {
-				ftype = "sqldb.TNullString"
-				useImport["sqldb"] = ""
+				ftype = "null.String"
+				useImport["null"] = ""
 			} else {
 				ftype = "string"
 			}
 		case "datetime", "timestamp", "date":
 			if nullable {
-				ftype = "sqldb.TNullTime"
-				useImport["sqldb"] = ""
+				ftype = "null.Time"
+				useImport["null"] = ""
 			} else {
 				ftype = "time.Time"
 				useImport["time"] = ""
@@ -126,14 +126,19 @@ func (d Driver) ReadTable(tblName, keyCol string, db *sql.DB) (*driver.TableData
 			} else {
 				ftype = "int64"
 			}
-		case "decimal", "float":
+		case "decimal":
+			if nullable {
+				ftype = "decimal.NullDecimal"
+			} else {
+				ftype = "decimal.Decimal"
+			}
+			useImport["decimal"] = ""
+		case "float":
 			ftype = "float32"
 		case "double":
 			ftype = "float64"
 		default:
-			{
-				return nil, fmt.Errorf("type " + field.DataType + " tidak terdefinisi")
-			}
+			return nil, fmt.Errorf("type " + field.DataType + " tidak terdefinisi")
 		}
 		if keyCol == "" {
 			if field.Key == "PRI" {
