@@ -60,7 +60,7 @@ func (obj TableDef) GenerateDBTarget(pathPrjDir, dbDriver string) {
 	nsTableName := strings.Replace(obj.TableName, ".", "_", 1)
 
 	nsName := obj.DBEnvKey + "_" + nsTableName
-	fnameQuery := filepath.Join(pathSaveRoot, nsName+".go")
+	fnameGen := filepath.Join(pathSaveRoot, nsName+".go")
 
 	if obj.KeyAttr == "" {
 		log.Fatal("TableDef.GenerateDBTarget: KeyAttr tidak didefinisikan")
@@ -201,7 +201,7 @@ func (obj TableDef) GenerateDBTarget(pathPrjDir, dbDriver string) {
 		"selectedDBDriver": dbDriver,
 	}
 
-	util.WriteTplFile(fnameQuery, txtEntityDef, tplData)
+	util.WriteTplFile(fnameGen, txtEntityDef, tplData)
 
 	fnameMain := filepath.Join(pathSaveRoot, "main.go")
 

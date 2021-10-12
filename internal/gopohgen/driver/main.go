@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-var LoadedDrivers = make(map[string]interface{})
+var LoadedDrivers = make(map[string]Driver) //interface{}
 
 type Driver interface {
 	ReadTable(tblName, keyCol string, db *sql.DB) (*TableData, error)
@@ -88,7 +88,7 @@ func NewTableData(colsData []ColData, keyCol string, keyAuto bool, softDelete bo
 func Get(driverName string) Driver {
 	driver, ok := LoadedDrivers[driverName]
 	if ok {
-		return driver.(Driver)
+		return driver //.(Driver)
 	}
 	return nil
 }

@@ -1,0 +1,47 @@
+package main
+
+import (
+	"os"
+{{if ne .imports ""}}
+{{.imports}}{{end}}
+
+	"github.com/albatiqy/gopoh/contract/log"
+	// "github.com/albatiqy/gopoh/contract/sqldb"
+
+	_ "{{.dbDriverEngine}}"
+)
+
+var (
+	sqlGen = sqlgen.{{.genStructName}}{
+		DBEnvKey: "{{.dbEnvKey}}",
+		DBDriver: "{{.dbDriver}}",
+		TableName: "{{.tableName}}",
+		FieldDefs: fieldDefs,
+		KeyAttr: "{{.keyAttr}}",
+		KeyAuto: {{.keyAutoStr}},
+		KeyCanUpdate: {{.keyCanUpdateStr}},
+		SoftDelete: {{.softDeleteStr}},
+		// EntityAttrs: ,
+		EntityName: "{{.entityName}}", // lower case singular
+		OverridesLabel: map[string]string{
+{{.overridesLabel}}
+			},
+		OverridesStructField: map[string]string{
+{{.overridesStructField}}
+			},
+		OverridesType: map[string]interface{}{
+{{.overridesType}}
+			},
+		OverridesJSON: map[string]string{
+{{.overridesJSON}}
+			},
+	}
+)
+
+func main() {
+	workingDir, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+	sqlGen.Generate(workingDir)
+}

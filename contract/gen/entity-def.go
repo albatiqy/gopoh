@@ -36,6 +36,8 @@ var (
 	txtEImplMysql string
 	//go:embed _embed/e-impl-postgres.txt
 	txtEImplPostgres string
+	//go:embed _embed/e-impl-sqlserver.txt
+	txtEImplSqlserver string
 	//go:embed _embed/e-service.txt
 	txtEService string
 	//go:embed _embed/repo-utils.txt
@@ -419,6 +421,8 @@ func (obj EntityDef) GenerateImpl(pathPrjDir string, dbDriver string) {
 		txtEImpl = txtEImplMysql
 	case "postgres":
 		txtEImpl = txtEImplPostgres
+	case "sqlserver":
+		txtEImpl = txtEImplSqlserver
 	}
 
 	util.WriteTplFile(fnameE, txtEImpl, tplDataE)

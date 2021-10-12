@@ -6,14 +6,15 @@ import (
 {{.imports}}{{end}}
 	gopohRepo "github.com/albatiqy/gopoh/contract/repository"
 	"github.com/albatiqy/gopoh/contract/repository/sqldb"
+	// "github.com/albatiqy/gopoh/pkg/lib/null"
 )
 
-type q{{.queryStructName}}Reader{{.dbDriverStr}} struct {
+type {{.queryStructName}}Reader{{.dbDriverStr}} struct {
 	conn *sqldb.Conn
 	colsMap *sqldb.ColsMap
 }
 
-func (r q{{.queryStructName}}Reader{{.dbDriverStr}}) CursorFindAll(ctx context.Context, finderOptionCursor gopohRepo.FinderOptionCursor) ([]core.Q{{.queryStructName}}, *gopohRepo.CursorData, error) {
+func (r {{.queryStructName}}Reader{{.dbDriverStr}}) CursorFindAll(ctx context.Context, finderOptionCursor gopohRepo.FinderOptionCursor) ([]core.Q{{.queryStructName}}, *gopohRepo.CursorData, error) {
 	qBuilder := r.conn.NewFinderCursorQueryBuilder(
 		"{{.sqlSelectAll}}",
 		finderOptionCursor, r.colsMap){{if ne .whereSoftDelete ""}}
@@ -78,7 +79,7 @@ func (r q{{.queryStructName}}Reader{{.dbDriverStr}}) CursorFindAll(ctx context.C
 	return records, qCursorData, nil
 }
 
-func (r q{{.queryStructName}}Reader{{.dbDriverStr}}) GetByID(ctx context.Context, {{.varKeyName}} {{.keyType}}) (*core.E{{.queryStructName}}, error) {
+func (r {{.queryStructName}}Reader{{.dbDriverStr}}) GetByID(ctx context.Context, {{.varKeyName}} {{.keyType}}) (*core.E{{.queryStructName}}, error) {
 	stmt, err := r.conn.PrepareContext(ctx,
 		"{{.sqlSelectByID}}",
 	)
@@ -99,8 +100,8 @@ func (r q{{.queryStructName}}Reader{{.dbDriverStr}}) GetByID(ctx context.Context
 	return &record, nil
 }
 
-func NewQ{{.queryStructName}}Reader{{.dbDriverStr}}(conn *sqldb.Conn) (core.Q{{.queryStructName}}Reader, error) {
-	return q{{.queryStructName}}Reader{{.dbDriverStr}}{
+func New{{.queryStructName}}Reader{{.dbDriverStr}}(conn *sqldb.Conn) (*{{.queryStructName}}Reader{{.dbDriverStr}}, error) {
+	return &{{.queryStructName}}Reader{{.dbDriverStr}}{
 		conn: conn,
 		colsMap: getQE{{.queryStructName}}ColsMap{{.dbDriverStr}}(),
 	}, nil

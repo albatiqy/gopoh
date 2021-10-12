@@ -4,6 +4,9 @@ import (
 	"strings"
 	"strconv"
 
+	// "github.com/albatiqy/gopoh/pkg/lib/decimal"
+	// "github.com/albatiqy/gopoh/pkg/lib/null"
+
 	"github.com/albatiqy/gopoh/contract/gen/driver"
 	"github.com/albatiqy/gopoh/contract/log"
 )
@@ -103,6 +106,21 @@ func (d Driver) GenerateEDelete(tblName string, keyCol string, softDelete bool) 
 		return "DELETE FROM " + tblName + " WHERE " + keyCol + "=$1"
 	}
 }
+
+/*
+func (d Driver) GenerateInsertSQLPlaceholders(val interface{}) string {
+	switch val.(type) {
+	case *int, *int8, *int16, *int32, *int64, *uint, *uint8, *uint16, *uint32, *uint64:
+		return `%d`
+	case *float32, *float64:
+		return `%f`
+	case *string:
+		return `'%s'`
+	default:
+		return `%s` // need quote
+	}
+}
+*/
 
 func init() {
 	driver.LoadedDrivers["postgres"] = Driver{}

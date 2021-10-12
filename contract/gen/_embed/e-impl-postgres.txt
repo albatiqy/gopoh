@@ -8,12 +8,12 @@ import (
 	"github.com/albatiqy/gopoh/contract/repository/sqldb"
 )
 
-type e{{.entityStructName}}Writer{{.dbDriverStr}} struct {
+type {{.entityStructName}}Writer{{.dbDriverStr}} struct {
 	conn *sqldb.Conn
-	reader q{{.entityStructName}}Reader{{.dbDriverStr}}
+	reader *{{.entityStructName}}Reader{{.dbDriverStr}}
 }
 
-func (w e{{.entityStructName}}Writer{{.dbDriverStr}}) Store(ctx context.Context, input core.E{{.entityStructName}}Input, {{.varKeyName}} {{.keyType}}) (*core.E{{.entityStructName}}, error) {
+func (w {{.entityStructName}}Writer{{.dbDriverStr}}) Store(ctx context.Context, input core.E{{.entityStructName}}Input, {{.varKeyName}} {{.keyType}}) (*core.E{{.entityStructName}}, error) {
 	_, err := w.conn.ExecContext(ctx,
 		"{{.sqlEStore}}",
 		{{.varKeyName}},
@@ -27,7 +27,7 @@ func (w e{{.entityStructName}}Writer{{.dbDriverStr}}) Store(ctx context.Context,
 }
 
 // jika softDelete cek dulu di database
-func (w e{{.entityStructName}}Writer{{.dbDriverStr}}) Update(ctx context.Context, input core.E{{.entityStructName}}Input, {{.varKeyName}} {{.keyType}}) (*core.E{{.entityStructName}}, int64, error) {
+func (w {{.entityStructName}}Writer{{.dbDriverStr}}) Update(ctx context.Context, input core.E{{.entityStructName}}Input, {{.varKeyName}} {{.keyType}}) (*core.E{{.entityStructName}}, int64, error) {
 	res, err := w.conn.ExecContext(ctx,
 		"{{.sqlEUpdate}}",
 {{.updateFieldArgs}}
@@ -50,7 +50,7 @@ func (w e{{.entityStructName}}Writer{{.dbDriverStr}}) Update(ctx context.Context
 	return record, rowsAffected, nil
 }
 {{if eq .softDeleteStr ""}}
-func (w e{{.entityStructName}}Writer{{.dbDriverStr}}) Delete(ctx context.Context, {{.varKeyName}} {{.keyType}}) (int64, error) {
+func (w {{.entityStructName}}Writer{{.dbDriverStr}}) Delete(ctx context.Context, {{.varKeyName}} {{.keyType}}) (int64, error) {
 	res, err := w.conn.ExecContext(ctx,
 		"{{.sqlEDelete}}",
 		{{.varKeyName}},
@@ -66,7 +66,7 @@ func (w e{{.entityStructName}}Writer{{.dbDriverStr}}) Delete(ctx context.Context
 
 	return rowsAffected, nil
 }{{else}}
-func (w e{{.entityStructName}}Writer{{.dbDriverStr}}) Delete(ctx context.Context, {{.varKeyName}} {{.keyType}}) (int64, error) {
+func (w {{.entityStructName}}Writer{{.dbDriverStr}}) Delete(ctx context.Context, {{.varKeyName}} {{.keyType}}) (int64, error) {
 	deletedAt := time.Now().UTC()
 
 	res, err := w.conn.ExecContext(ctx,
@@ -86,9 +86,9 @@ func (w e{{.entityStructName}}Writer{{.dbDriverStr}}) Delete(ctx context.Context
 	return rowsAffected, nil
 }{{end}}
 
-func NewE{{.entityStructName}}Writer{{.dbDriverStr}}(conn *sqldb.Conn, reader core.Q{{.entityStructName}}Reader) (core.E{{.entityStructName}}Writer, error) {
-	return &e{{.entityStructName}}Writer{{.dbDriverStr}}{
+func New{{.entityStructName}}Writer{{.dbDriverStr}}(conn *sqldb.Conn, reader *{{.entityStructName}}Reader{{.dbDriverStr}}) (*{{.entityStructName}}Writer{{.dbDriverStr}}, error) {
+	return &{{.entityStructName}}Writer{{.dbDriverStr}}{
 		conn:   conn,
-		reader: reader.(q{{.entityStructName}}Reader{{.dbDriverStr}}), // handle assert error
+		reader: reader,
 	}, nil
 }

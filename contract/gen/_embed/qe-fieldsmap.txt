@@ -15,8 +15,8 @@ func getQE{{.queryStructName}}FieldsMap() *gopoh.FieldsMap {
 	}
 }
 
-func getQE{{.queryStructName}}FieldsLabel() gopoh.FieldsLabel {
-	return eFieldsLabel{
+func getQE{{.queryStructName}}FieldsLabel() *eFieldsLabel {
+	return &eFieldsLabel{
 		labels: map[string]string{
 {{.labelsMap}}
 		},

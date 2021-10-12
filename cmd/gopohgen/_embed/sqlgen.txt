@@ -1,0 +1,44 @@
+package sqlgen
+
+import (
+	_ "embed"
+	"fmt"
+	"path/filepath"
+	"reflect"
+	"strings"
+	"time"
+{{if ne .imports ""}}
+{{.imports}}{{end}}
+
+	"github.com/albatiqy/gopoh/contract/gen/driver"
+	// "github.com/albatiqy/gopoh/contract/gen/util"
+	"github.com/albatiqy/gopoh/contract/log"
+	"github.com/albatiqy/gopoh/pkg/lib/decimal"
+	// "github.com/albatiqy/gopoh/pkg/lib/fs"
+	"github.com/albatiqy/gopoh/pkg/lib/null"
+)
+
+type {{.genStructName}} struct {
+	DBEnvKey             string
+	DBDriver             string
+	TableName            string
+	EntityName           string
+	FieldDefs            map[string]driver.FieldDef
+	KeyAttr              string
+	KeyAuto              bool
+	KeyCanUpdate         bool
+	SoftDelete           bool
+	EntityAttrs          []string
+	OverridesStructField map[string]string
+	OverridesType        map[string]interface{}
+	OverridesJSON        map[string]string
+	OverridesLabel       map[string]string
+}
+
+var (
+
+)
+
+func (obj {{.genStructName}}) Generate(pathPrjDir string) {
+
+}

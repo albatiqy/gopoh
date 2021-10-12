@@ -23,12 +23,16 @@ var (
 	txtQEColsMapMysql string
 	//go:embed _embed/qe-colsmap-postgres.txt
 	txtQEColsMapPostgres string
+	//go:embed _embed/qe-colsmap-sqlserver.txt
+	txtQEColsMapSqlserver string
 	//go:embed _embed/qe-fieldsmap.txt
 	txtQEFieldsMap string
 	//go:embed _embed/qe-impl-mysql.txt
 	txtQEImplMysql string
 	//go:embed _embed/qe-impl-postgres.txt
 	txtQEImplPostgres string
+	//go:embed _embed/qe-impl-sqlserver.txt
+	txtQEImplSqlserver string
 )
 
 type FieldOverride struct {
@@ -341,6 +345,9 @@ func (obj QueryDef) Generate(pathPrjDir, fName, dbDriver string) { // harus diha
 	case "postgres":
 		txtQEImpl = txtQEImplPostgres
 		txtQEColsMap = txtQEColsMapPostgres
+	case "sqlserver":
+		txtQEImpl = txtQEImplSqlserver
+		txtQEColsMap = txtQEColsMapSqlserver
 	}
 
 	util.WriteTplFile(fnameImpl, txtQEImpl, tplDataImpl)
