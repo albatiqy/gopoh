@@ -2,8 +2,6 @@ package main
 
 import (
 	"os"
-{{if ne .imports ""}}
-{{.imports}}{{end}}
 
 	"github.com/albatiqy/gopoh/contract/log"
 	// "github.com/albatiqy/gopoh/contract/sqldb"
@@ -12,7 +10,7 @@ import (
 )
 
 var (
-	sqlGen = sqlgen.{{.genStructName}}{
+	sqlGen = genDev{
 		DBEnvKey: "{{.dbEnvKey}}",
 		DBDriver: "{{.dbDriver}}",
 		TableName: "{{.tableName}}",
@@ -21,8 +19,8 @@ var (
 		KeyAuto: {{.keyAutoStr}},
 		KeyCanUpdate: {{.keyCanUpdateStr}},
 		SoftDelete: {{.softDeleteStr}},
-		// EntityAttrs: ,
-		EntityName: "{{.entityName}}", // lower case singular
+		ObjectName: "{{.objectName}}", // lower case singular
+		ObjectPackage: "dbops",
 		OverridesLabel: map[string]string{
 {{.overridesLabel}}
 			},

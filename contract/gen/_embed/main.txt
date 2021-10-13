@@ -11,7 +11,6 @@ import (
 
 var (
 	cmds = make(map[string]func(*flag.FlagSet, []string))
-	externalPackage = false
 	workingDir string
 )
 

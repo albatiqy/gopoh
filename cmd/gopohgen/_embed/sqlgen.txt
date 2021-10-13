@@ -1,4 +1,4 @@
-package sqlgen
+package main
 
 import (
 	_ "embed"
@@ -11,24 +11,24 @@ import (
 {{.imports}}{{end}}
 
 	"github.com/albatiqy/gopoh/contract/gen/driver"
-	// "github.com/albatiqy/gopoh/contract/gen/util"
+	"github.com/albatiqy/gopoh/contract/gen/util"
 	"github.com/albatiqy/gopoh/contract/log"
 	"github.com/albatiqy/gopoh/pkg/lib/decimal"
-	// "github.com/albatiqy/gopoh/pkg/lib/fs"
+	"github.com/albatiqy/gopoh/pkg/lib/fs"
 	"github.com/albatiqy/gopoh/pkg/lib/null"
 )
 
-type {{.genStructName}} struct {
+type genDev struct {
 	DBEnvKey             string
 	DBDriver             string
 	TableName            string
-	EntityName           string
+	ObjectName           string
+	ObjectPackage        string
 	FieldDefs            map[string]driver.FieldDef
 	KeyAttr              string
 	KeyAuto              bool
 	KeyCanUpdate         bool
 	SoftDelete           bool
-	EntityAttrs          []string
 	OverridesStructField map[string]string
 	OverridesType        map[string]interface{}
 	OverridesJSON        map[string]string
@@ -36,9 +36,110 @@ type {{.genStructName}} struct {
 }
 
 var (
-
+	//go:embed _embed/{{.embedObjectFile}}
+	txtObjectGen string
 )
 
-func (obj {{.genStructName}}) Generate(pathPrjDir string) {
+func (obj genDev) Generate(pathPrjDir string) {
+	modName := util.GetModName(pathPrjDir)
+	if modName == "" {
+		log.Fatal("direktori project tidak valid")
+	}
+
+	pathSaveRoot := filepath.Join(pathPrjDir, "internal", obj.ObjectPackage)
+	if success, err := fs.MkDirIfNotExists(pathSaveRoot); !success {
+		log.Fatal(err)
+	}
+
+	nsName := obj.DBEnvKey + "_" + strings.Replace(obj.TableName, ".", "_", 1)
+
+	fnameOut := filepath.Join(pathSaveRoot, nsName + ".go")
+
+	genStructName := strings.ReplaceAll(obj.ObjectName, "_", " ")
+	genStructName = strings.ToLower(genStructName)
+	genStructName = strings.Title(genStructName)
+	genStructName = strings.ReplaceAll(genStructName, " ", "")
+
+
+
+
+
+	var (
+		imports   []string
+		useImport = map[string]string{}
+	)
+	newJsonKeyAttr := obj.KeyAttr
+	for attr, field := range obj.FieldDefs {
+		switch field.Type.(type) {
+		case *time.Time:
+			useImport["time"] = ""
+		case *null.String:
+			useImport["null"] = ""
+		case *decimal.Decimal, *decimal.NullDecimal:
+			useImport["decimal"] = ""
+		}
+
+
+		if obj.OverridesType != nil {
+			if fieldType, ok := obj.OverridesType[attr]; ok {
+				field.Type = fieldType
+			}
+		}
+
+		if obj.OverridesJSON != nil {
+			if fieldJSON, ok := obj.OverridesJSON[attr]; ok {
+				field.JSON = fieldJSON
+			}
+		}
+
+		if attr == obj.KeyAttr {
+			newJsonKeyAttr = field.JSON
+		}
+
+		if obj.OverridesLabel != nil {
+			if fieldLabel, ok := obj.OverridesLabel[attr]; ok {
+				field.Label = fieldLabel
+			}
+		}
+
+		field.StructField = strings.ReplaceAll(field.Label, " ", "")
+		if obj.OverridesStructField != nil {
+			if structField, ok := obj.OverridesStructField[attr]; ok {
+				field.StructField = structField
+			}
+		}
+
+
+
+
+
+
+
+
+		obj.FieldDefs[attr] = field
+	}
+
+	for impk, impv := range useImport {
+		if impv != "" {
+			imports = append(imports, "\t\""+impv+`"`)
+		} else {
+			if impl, ok := util.ImportsMap[impk]; ok {
+				imports = append(imports, "\t\""+impl+`"`)
+			}
+		}
+	}
+
+	genDriver := gendriver.Get(obj.DBDriver)
+
+	tplData := map[string]string{
+		"imports":          strings.Join(imports, "\n"),
+		"genStructName": genStructName,
+		"objectPackage": obj.ObjectPackage,
+		"newJsonKeyAttr": newJsonKeyAttr,
+	}
+
+	util.WriteTplFile(fnameOut, txtObjectGen, tplData)
+
+
 
 }

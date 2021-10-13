@@ -1,0 +1,9 @@
+package {{.objectPackage}}
+
+import (
+
+)
+
+type {{.genStructName}} struct {
+
+}

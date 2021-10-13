@@ -32,6 +32,8 @@ var (
 	txtFieldDefs string
 	//go:embed _embed/sqlgen.txt
 	txtSqlGen string
+	//go:embed _embed/gen-object.txt
+	txtSqlGenObject string
 )
 
 func main() {
@@ -87,27 +89,20 @@ Options:
 		if success, err := fs.MkDirIfNotExists(pathSqlDevGen); !success {
 			ui.Error(fmt.Sprintf("Error: %s", err))
 			os.Exit(1)
-		} else {
-			if err == nil {
-				fs.WriteTextFile("*", filepath.Join(pathSqlDevGen, ".gitignore"))
-			}
 		}
 
-		pathSqlGenDir := filepath.Join(workingDir, "internal/sqlgen")
-		if success, err := fs.MkDirIfNotExists(pathSqlGenDir); !success {
-			ui.Error(fmt.Sprintf("Error: %s", err))
-			os.Exit(1)
-		}
-
-		nsTableName := strings.Replace(tableName, ".", "_", 1)
-
-		nsName := dbEnvKey + "_" + nsTableName
+		nsName := dbEnvKey + "_" + strings.Replace(tableName, ".", "_", 1)
 
 		pathSaveRoot := filepath.Join(pathSqlDevGen, nsName)
-		if success, err := fs.MkDirIfNotExists(pathSaveRoot); !success {
+		embedPath := filepath.Join(pathSaveRoot, "_embed")
+		if success, err := fs.MkDirIfNotExists(embedPath); !success {
 			ui.Error(fmt.Sprintf("Error: %s", err))
 			os.Exit(1)
 		}
+
+		embedObjectFile := nsName + ".txt"
+
+		fs.WriteTextFile(txtSqlGenObject, filepath.Join(embedPath, embedObjectFile))
 
 		fnameFieldDefs := filepath.Join(pathSaveRoot, "field-defs.go")
 		fnameMain := filepath.Join(pathSaveRoot, "main.go")
@@ -118,11 +113,11 @@ Options:
 			genMain = false
 		}
 
-		fnameGen := filepath.Join(pathSqlGenDir, nsName+".go")
-		genGen := true
+		fnameGen := filepath.Join(pathSaveRoot, "gen.go")
+		genDev := true
 
 		if fs.FileInfo(fnameGen) != nil {
-			genGen = false
+			genDev = false
 		}
 
 		dbConn := sqldb.NewConn(getDBSetting(dbEnvKey))
@@ -151,39 +146,15 @@ Options:
 			softDeleteStr = "true"
 		}
 
-		genStructName := strings.ReplaceAll(nsName, "_", " ")
-		genStructName = strings.ToLower(genStructName)
-		genStructName = strings.Title(genStructName)
-		genStructName = strings.ReplaceAll(genStructName, " ", "")
-
 		if genMain {
-			var (
-				useImport = map[string]string{}
-				imports   []string
-			)
-
-			useImport["sqlgen"] = modName + "/internal/sqlgen"
-
-			for impk, impv := range useImport {
-				if impv != "" {
-					imports = append(imports, "\t\""+impv+`"`)
-				} else {
-					if impl, ok := util.ImportsMap[impk]; ok {
-						imports = append(imports, "\t\""+impl+`"`)
-					}
-				}
-			}
-
 			dbDriverEngine := modName + "/pkg/gendriver/" + dbDriver
 
 			tplData := map[string]string{
-				"imports":              strings.Join(imports, "\n"),
 				"dbDriverEngine":       dbDriverEngine,
-				"genStructName":        genStructName,
 				"dbEnvKey":             dbEnvKey,
 				"dbDriver":             dbDriver,
 				"tableName":            tableName,
-				"entityName":           nsTableName,
+				"objectName":           nsName,
 				"keyAttr":              tableData.KeyCol,
 				"keyAutoStr":           keyAutoStr,
 				"keyCanUpdateStr":      keyCanUpdateStr,
@@ -197,13 +168,13 @@ Options:
 			util.WriteTplFile(fnameMain, txtDevMain, tplData)
 		}
 
-		if genGen {
+		if genDev {
 			var (
 				useImport = map[string]string{}
 				imports   []string
 			)
 
-			useImport["sqldriver"] = modName + "/pkg/gendriver"
+			useImport["gendriver"] = modName + "/pkg/gendriver"
 
 			for impk, impv := range useImport {
 				if impv != "" {
@@ -216,8 +187,8 @@ Options:
 			}
 
 			tplData := map[string]string{
-				"imports":       strings.Join(imports, "\n"),
-				"genStructName": genStructName,
+				"embedObjectFile": embedObjectFile,
+				"imports":         strings.Join(imports, "\n"),
 			}
 
 			util.WriteTplFile(fnameGen, txtSqlGen, tplData)
