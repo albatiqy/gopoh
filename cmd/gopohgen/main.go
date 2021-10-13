@@ -100,9 +100,8 @@ Options:
 			os.Exit(1)
 		}
 
-		embedObjectFile := nsName + ".txt"
-
-		fs.WriteTextFile(txtSqlGenObject, filepath.Join(embedPath, embedObjectFile))
+		fs.WriteTextFile(txtSqlGenObject, filepath.Join(embedPath, "object-gen.txt"))
+		fs.WriteTextFile("!*", filepath.Join(pathSqlDevGen, ".gitignore"))
 
 		fnameFieldDefs := filepath.Join(pathSaveRoot, "field-defs.go")
 		fnameMain := filepath.Join(pathSaveRoot, "main.go")
@@ -187,7 +186,6 @@ Options:
 			}
 
 			tplData := map[string]string{
-				"embedObjectFile": embedObjectFile,
 				"imports":         strings.Join(imports, "\n"),
 			}
 

@@ -107,21 +107,6 @@ func (d Driver) GenerateEDelete(tblName string, keyCol string, softDelete bool) 
 	}
 }
 
-/*
-func (d Driver) GenerateInsertSQLPlaceholders(val interface{}) string {
-	switch val.(type) {
-	case *int, *int8, *int16, *int32, *int64, *uint, *uint8, *uint16, *uint32, *uint64:
-		return `%d`
-	case *float32, *float64:
-		return `%f`
-	case *string:
-		return `'%s'`
-	default:
-		return `%s` // need quote
-	}
-}
-*/
-
 func init() {
 	driver.LoadedDrivers["postgres"] = Driver{}
 	log.Debugf("postgres gen: %s", "initialized")

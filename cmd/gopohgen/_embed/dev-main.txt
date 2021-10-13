@@ -20,7 +20,7 @@ var (
 		KeyCanUpdate: {{.keyCanUpdateStr}},
 		SoftDelete: {{.softDeleteStr}},
 		ObjectName: "{{.objectName}}", // lower case singular
-		ObjectPackage: "dbops",
+		ObjectPackage: "sqlgen",
 		OverridesLabel: map[string]string{
 {{.overridesLabel}}
 			},

@@ -1,9 +1,39 @@
 package {{.objectPackage}}
 
 import (
-
+	"fmt"
+	"strconv"
+	"strings"
+{{if ne .imports ""}}{{.imports}}{{end}}
+	// "github.com/albatiqy/gopoh-app-dbimport/pkg/gendriver"
 )
 
-type {{.genStructName}} struct {
+type {{.genStructName}}Model struct {
+{{.fieldsModel}}
+}
 
+/*
+{{.fieldScansModel}}
+*/
+
+/*
+{{.insertValuesTpl}}
+
+{{.selectTpl}}
+*/
+
+{{if ne .qTimeLocalModel ""}}
+{{.qTimeLocalModel}}
+{{end}}
+
+type {{.genStructName}} struct {
+}
+
+func (gen {{.genStructName}}) Values({{.valuesArgs}}) string {
+{{.quoteFuncTpl}}
+	return fmt.Sprintf(`({{.valuesPlaceholders}})`, {{.valuesVars}})
+}
+
+func New{{.genStructName}}() *{{.genStructName}} {
+	return &{{.genStructName}}{}
 }

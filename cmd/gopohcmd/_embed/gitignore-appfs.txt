@@ -3,3 +3,4 @@
 !log
 !.gitignore
 !webroot
+!sql-dev
