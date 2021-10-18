@@ -6,6 +6,8 @@ import (
 {{if ne .imports ""}}
 {{.imports}}{{end}}
 	"github.com/albatiqy/gopoh/contract/repository/sqldb"
+	// "github.com/albatiqy/gopoh/pkg/lib/null"
+	// "github.com/albatiqy/gopoh/pkg/lib/decimal"
 )
 
 type {{.entityStructName}}Writer{{.dbDriverStr}} struct {

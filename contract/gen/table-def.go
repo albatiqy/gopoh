@@ -105,7 +105,7 @@ func (obj TableDef) GenerateDBTarget(pathPrjDir, dbDriver string) {
 			switch field.Type.(type) {
 			case *time.Time:
 				useImport["time"] = ""
-			case *null.String:
+			case *null.String, *null.Time, *null.Bool, *null.Float64, *null.Int32, *null.Int64:
 				useImport["null"] = ""
 			case *decimal.Decimal, *decimal.NullDecimal:
 				useImport["decimal"] = ""

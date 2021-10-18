@@ -2,10 +2,8 @@ package {{.objectPackage}}
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 {{if ne .imports ""}}{{.imports}}{{end}}
-	// "github.com/albatiqy/gopoh-app-dbimport/pkg/gendriver"
+	"github.com/albatiqy/gopoh-app-dbimport/pkg/gendriver"
 )
 
 type {{.genStructName}}Model struct {
@@ -14,12 +12,8 @@ type {{.genStructName}}Model struct {
 
 /*
 {{.fieldScansModel}}
-*/
 
-/*
-{{.insertValuesTpl}}
-
-{{.selectTpl}}
+{{.fieldModel}}
 */
 
 {{if ne .qTimeLocalModel ""}}
@@ -27,13 +21,26 @@ type {{.genStructName}}Model struct {
 {{end}}
 
 type {{.genStructName}} struct {
+	cols []string
+	tableName string
+	genDriver gendriver.Engine
+	insertPlaceHolders string
 }
 
 func (gen {{.genStructName}}) Values({{.valuesArgs}}) string {
-{{.quoteFuncTpl}}
-	return fmt.Sprintf(`({{.valuesPlaceholders}})`, {{.valuesVars}})
+	return fmt.Sprintf("(" + gen.insertPlaceHolders + ")", {{.valuesVars}})
 }
 
-func New{{.genStructName}}() *{{.genStructName}} {
-	return &{{.genStructName}}{}
+func New{{.genStructName}}(genDriver gendriver.Engine) *{{.genStructName}} {
+	insertPlaceHolders := genDriver.InsertPlaceholders([]interface{}{
+{{.fieldTypes}}
+		})
+	return &{{.genStructName}}{
+		cols: []string{
+{{.tableCols}}
+		},
+		tableName: "{{.tableName}}",
+		genDriver: genDriver,
+		insertPlaceHolders: insertPlaceHolders,
+	}
 }

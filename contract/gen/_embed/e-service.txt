@@ -12,7 +12,7 @@ import (
 type {{.entityStructName}}Service struct {
 	gate gopoh.Gate
 	q{{.entityStructName}}Reader core.Q{{.entityStructName}}Reader
-	e{{.entityStructName}}Writer core.E{{.entityStructName}}Writer
+	{{.varEntityStructName}}Writer core.{{.entityStructName}}Writer
 	fieldsLabel gopoh.FieldsLabel
 }
 
@@ -32,9 +32,13 @@ func (svc {{.entityStructName}}Service) Store(ctx context.Context, input core.E{
 		return nil, vErr
 	}
 
+	writerInput := core.{{.entityStructName}}Input{
+{{.serviceFieldsCopy}}
+	}
+
 	// define autoID!
 	{{.varKeyName}} :=
-	record, err := svc.e{{.entityStructName}}Writer.Store(ctx, input, {{.varKeyName}})
+	record, err := svc.{{.varEntityStructName}}Writer.Store(ctx, writerInput, {{.varKeyName}})
 	if err != nil {
 		return nil, newInternalError(err.Error(), err)
 	}
@@ -58,12 +62,20 @@ func (svc {{.entityStructName}}Service) Update(ctx context.Context, input core.E
 		return nil, vErr
 	}
 
-	record, _, err := svc.e{{.entityStructName}}Writer.Update(ctx, input, {{.varKeyName}}){{else}}v := validation.NewInputValidator(input, nil)
+	writerInput := core.{{.entityStructName}}Input{
+{{.serviceFieldsCopy}}
+	}
+
+	record, _, err := svc.{{.varEntityStructName}}Writer.Update(ctx, writerInput, {{.varKeyName}}){{else}}v := validation.NewInputValidator(input, nil)
 	if vErr := v.Validate(); vErr != nil {
 		return nil, vErr
 	}
 
-	record, _, err := svc.e{{.entityStructName}}Writer.Update(ctx, input, i{{.keyStructField}}.({{.keyType}})){{end}}
+	writerInput := core.{{.entityStructName}}Input{
+{{.serviceFieldsCopy}}
+	}
+
+	record, _, err := svc.{{.varEntityStructName}}Writer.Update(ctx, writerInput, i{{.keyStructField}}.({{.keyType}})){{end}}
 	if err != nil {
 		return nil, newInternalError(err.Error(), err)
 	}
@@ -82,7 +94,7 @@ func (svc {{.entityStructName}}Service) Delete(ctx context.Context, i{{.keyStruc
 		return err
 	}
 
-	rowsAffected, err := svc.e{{.entityStructName}}Writer.Delete(ctx, {{.varKeyName}}){{else}}rowsAffected, err := svc.e{{.entityStructName}}Writer.Delete(ctx, i{{.keyStructField}}.({{.keyType}})){{end}}
+	rowsAffected, err := svc.{{.varEntityStructName}}Writer.Delete(ctx, {{.varKeyName}}){{else}}rowsAffected, err := svc.{{.varEntityStructName}}Writer.Delete(ctx, i{{.keyStructField}}.({{.keyType}})){{end}}
 	if err != nil {
 		if err, ok := err.(gopoh.UserMessageError); ok {
 			return err
@@ -147,11 +159,11 @@ func (svc {{.entityStructName}}Service) createE{{.entityStructName}}InputValidat
 	return validation.NewInputValidator(input, svc.fieldsLabel)
 }
 
-func New{{.entityStructName}}Service(gate gopoh.Gate, q{{.entityStructName}}Reader core.Q{{.entityStructName}}Reader, e{{.entityStructName}}Writer core.E{{.entityStructName}}Writer) (*{{.entityStructName}}Service, error) {
+func New{{.entityStructName}}Service(gate gopoh.Gate, q{{.entityStructName}}Reader core.Q{{.entityStructName}}Reader, {{.varEntityStructName}}Writer core.{{.entityStructName}}Writer) (*{{.entityStructName}}Service, error) {
 	return &{{.entityStructName}}Service{
 		gate: gate,
 		q{{.entityStructName}}Reader: q{{.entityStructName}}Reader,
-		e{{.entityStructName}}Writer: e{{.entityStructName}}Writer,
+		{{.varEntityStructName}}Writer: {{.varEntityStructName}}Writer,
 		fieldsLabel: getQE{{.entityStructName}}FieldsLabel(),
 	}, nil
 }

@@ -11,7 +11,6 @@ import (
 {{if ne .imports ""}}
 {{.imports}}{{end}}
 
-	"github.com/albatiqy/gopoh/contract/gen/driver"
 	"github.com/albatiqy/gopoh/contract/gen/util"
 	"github.com/albatiqy/gopoh/contract/log"
 	"github.com/albatiqy/gopoh/pkg/lib/decimal"
@@ -62,16 +61,17 @@ func (obj genDev) Generate(pathPrjDir string) {
 	genStructName = strings.ReplaceAll(genStructName, " ", "")
 
 	var (
-		fieldsLen          = len(obj.FieldDefs)
-		imports            []string
-		useImport          = map[string]string{}
-		valuesPlaceholders = make([]string, fieldsLen)
-		valuesArgs         = make([]string, fieldsLen)
-		valuesVars         = make([]string, fieldsLen)
-		strFieldsModel     = make([]string, fieldsLen)
-		fieldScansModel    = make([]string, fieldsLen)
-		tableCols          = make([]string, fieldsLen)
-		qTimeLocalModel    []string
+		fieldsLen       = len(obj.FieldDefs)
+		imports         []string
+		useImport       = map[string]string{}
+		valuesArgs      = make([]string, fieldsLen)
+		valuesVars      = make([]string, fieldsLen)
+		strFieldsModel  = make([]string, fieldsLen)
+		fieldScansModel = make([]string, fieldsLen)
+		fieldModel      = make([]string, fieldsLen)
+		tableCols       = make([]string, fieldsLen)
+		fieldTypes      = make([]string, fieldsLen)
+		qTimeLocalModel []string
 	)
 	newJsonKeyAttr := obj.KeyAttr
 	for attr, field := range obj.FieldDefs {
@@ -125,22 +125,11 @@ func (obj genDev) Generate(pathPrjDir string) {
 				valuesVars[field.Ordinal] = varName
 		*/
 		case *string:
-			valuesVars[field.Ordinal] = "quoteString(" + varName + ")"
+			valuesVars[field.Ordinal] = "gen.genDriver.QuoteString(" + varName + ")"
 		case *time.Time, *null.String, *null.Time, *null.Bool, *null.Int32, *null.Int64, *null.Float64, *decimal.Decimal, *decimal.NullDecimal:
-			valuesVars[field.Ordinal] = "quote(" + varName + ")"
+			valuesVars[field.Ordinal] = "gen.genDriver.Quote(" + varName + ")"
 		default:
 			valuesVars[field.Ordinal] = varName
-		}
-
-		switch field.Type.(type) {
-		case *int, *int8, *int16, *int32, *int64, *uint, *uint8, *uint16, *uint32, *uint64:
-			valuesPlaceholders[field.Ordinal] = `%d`
-		case *float32, *float64:
-			valuesPlaceholders[field.Ordinal] = `%f`
-		case *string:
-			valuesPlaceholders[field.Ordinal] = `'%s'`
-		default:
-			valuesPlaceholders[field.Ordinal] = `%s` // need quote
 		}
 
 		switch field.Type.(type) {
@@ -155,7 +144,9 @@ func (obj genDev) Generate(pathPrjDir string) {
 		}
 		strFieldsModel[field.Ordinal] = fmt.Sprintf("\t%[1]s %[2]s `json:\"%[3]s\"`", field.StructField, fieldTypeStr, field.JSON)
 
-		tableCols[field.Ordinal] = field.Col
+		tableCols[field.Ordinal] = "\t\t\t\"" + field.Col + "\","
+		fieldTypes[field.Ordinal] = "\t\t\t(*" + fieldTypeStr + ")(nil),"
+		fieldModel[field.Ordinal] = "\t\t\trecord." + field.StructField + ","
 
 		obj.FieldDefs[attr] = field
 	}
@@ -170,23 +161,21 @@ func (obj genDev) Generate(pathPrjDir string) {
 		}
 	}
 
-	genDriver := gendriver.Get(obj.DBDriver)
-
 	tplData := map[string]string{
 		"imports":            strings.Join(imports, "\n"),
 		"genStructName":      genStructName,
 		"dbDriver":           obj.DBDriver,
 		"objectPackage":      obj.ObjectPackage,
-		"newJsonKeyAttr":     newJsonKeyAttr,
+		"tableName":          obj.TableName,
+		"newJsonKeyAttr":     newJsonKeyAttr, // unused
 		"valuesArgs":         strings.Join(valuesArgs, ", "),
-		"valuesPlaceholders": strings.Join(valuesPlaceholders, ","),
+		"tableCols":          strings.Join(tableCols, "\n"),
+		"fieldTypes":         strings.Join(fieldTypes, "\n"),
 		"valuesVars":         strings.Join(valuesVars, ", "),
 		"fieldScansModel":    strings.Join(fieldScansModel, "\n"),
+		"fieldModel":         strings.Join(fieldModel, "\n"),
 		"qTimeLocalModel":    strings.Join(qTimeLocalModel, "\n"),
 		"fieldsModel":        strings.Join(strFieldsModel, "\n"),
-		"quoteFuncTpl":       genDriver.QuoteFuncTpl(),
-		"insertValuesTpl":    genDriver.InsertValuesTpl(obj.TableName, tableCols),
-		"selectTpl":          genDriver.SelectTpl(obj.TableName, tableCols),
 	}
 
 	util.WriteTplFile(fnameOut, txtObjectGen, tplData)

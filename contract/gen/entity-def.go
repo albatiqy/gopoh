@@ -112,11 +112,13 @@ func (obj EntityDef) GenerateContr(pathPrjDir string) {
 	fieldLen := len(pickedFields)
 
 	strFields := make([]string, fieldLen)
+	strFieldsTags := make([]string, fieldLen)
 
 	var (
-		strFieldsInput []string
-		importsE       []string
-		useImportE     = map[string]string{}
+		strFieldsEInput []string
+		strFieldsInput  []string
+		importsE        []string
+		useImportE      = map[string]string{}
 	)
 
 	for _, field := range pickedFields {
@@ -132,29 +134,36 @@ func (obj EntityDef) GenerateContr(pathPrjDir string) {
 		if int(field.Ordinal) == keyIdx {
 			switch field.Type.(type) {
 			case *uint64, *uint32, *uint, *int64, *int32, *int:
-				strFields[field.Ordinal] = fmt.Sprintf("\t// %[1]s %[2]s `validate:\"%[3]s\" json:\"%[4]s\"` // warning!, js bug conversion", field.StructField+"String", "string", "", field.JSON)
+				strFields[field.Ordinal] = fmt.Sprintf("\t// %[1]s %[2]s", field.StructField+"String", "string")
+				strFieldsTags[field.Ordinal] = fmt.Sprintf("`validate:\"%[1]s\" json:\"%[2]s\"` warning!, js bug conversion", "", field.JSON)
 			default:
-				strFields[field.Ordinal] = fmt.Sprintf("\t// %[1]s %[2]s `validate:\"%[3]s\" json:\"%[4]s\"`", field.StructField, fieldType, "", field.JSON)
+				strFields[field.Ordinal] = fmt.Sprintf("\t// %[1]s %[2]s", field.StructField, fieldType)
+				strFieldsTags[field.Ordinal] = fmt.Sprintf("`validate:\"%[1]s\" json:\"%[2]s\"`", "", field.JSON)
 			}
 		} else {
-			strFields[field.Ordinal] = fmt.Sprintf("\t%[1]s %[2]s `validate:\"%[3]s\" json:\"%[4]s\"`", field.StructField, fieldType, "", field.JSON)
+			strFields[field.Ordinal] = fmt.Sprintf("\t%[1]s %[2]s", field.StructField, fieldType)
+			strFieldsTags[field.Ordinal] = fmt.Sprintf("`validate:\"%[1]s\" json:\"%[2]s\"`", "", field.JSON)
 		}
 	}
 
 	if obj.KeyCanUpdate {
+		strFieldsEInput = make([]string, fieldLen)
 		strFieldsInput = make([]string, fieldLen)
-		copy(strFieldsInput, strFields)
-		/*
-			for i := range strFields {
-				strFieldsInput[i] = strFields[i]
-			}
-		*/
+		// copy(strFieldsEInput, strFields)
+
+		for i := range strFields {
+			strFieldsEInput[i] = strFields[i] + " " + strFieldsTags[i]
+			strFieldsInput[i] = strFields[i]
+		}
+
 	} else {
 		newLen := fieldLen - 1
 		var newIdx int
+		strFieldsEInput = make([]string, newLen)
 		strFieldsInput = make([]string, newLen)
 		for i := range strFields {
 			if i != keyIdx {
+				strFieldsEInput[newIdx] = strFields[i] + " " + strFieldsTags[i]
 				strFieldsInput[newIdx] = strFields[i]
 				newIdx++
 			}
@@ -176,6 +185,7 @@ func (obj EntityDef) GenerateContr(pathPrjDir string) {
 	entityStructName = strings.ReplaceAll(entityStructName, " ", "")
 
 	tplData := map[string]string{
+		"fieldsEInput":     strings.Join(strFieldsEInput, "\n"),
 		"fieldsInput":      strings.Join(strFieldsInput, "\n"),
 		"imports":          strings.Join(importsE, "\n"),
 		"entityStructName": entityStructName,
@@ -281,6 +291,7 @@ func (obj EntityDef) GenerateImpl(pathPrjDir string, dbDriver string) {
 
 	storeCols := make([]string, fieldLen)
 	fieldArgs := make([]string, fieldLen)
+	serviceFieldsCopy := make([]string, fieldLen)
 	dbRequiredNotice := make([]string, fieldLen)
 
 	var (
@@ -299,6 +310,7 @@ func (obj EntityDef) GenerateImpl(pathPrjDir string, dbDriver string) {
 		if field.DBRequired {
 			dbRequiredNotice[field.Ordinal] = " // No default"
 		}
+		serviceFieldsCopy[field.Ordinal] = "\t\t" + field.StructField + ": input." + field.StructField + ","
 		if int(field.Ordinal) == keyIdx {
 			switch field.Type.(type) {
 			case *uint64, *uint32, *uint, *int64, *int32, *int:
@@ -316,9 +328,12 @@ func (obj EntityDef) GenerateImpl(pathPrjDir string, dbDriver string) {
 			}
 		} else {
 			switch field.Type.(type) {
-			case *time.Time, *null.Time:
+			case *time.Time:
 				useImportE["time"] = ""
-				fieldArgs[field.Ordinal] = "\t\tinput." + field.StructField + ", // warning to UTC convertion!!================"
+				fieldArgs[field.Ordinal] = "\t\tinput." + field.StructField + ".UTC(), // warning to UTC convertion!!================"
+			case *null.Time:
+				// useImportE["null"] = ""
+				fieldArgs[field.Ordinal] = "\t\tnull.NewTime(input."+field.StructField+".Time.UTC(), input."+field.StructField+".Valid), // warning to UTC convertion!!================"
 			default:
 				fieldArgs[field.Ordinal] = "\t\tinput." + field.StructField + ","
 			}
@@ -393,11 +408,15 @@ func (obj EntityDef) GenerateImpl(pathPrjDir string, dbDriver string) {
 	entityStructName = strings.Title(entityStructName)
 	entityStructName = strings.ReplaceAll(entityStructName, " ", "")
 
-	genDriver := driver.Get(dbDriver)
+	r := []rune(entityStructName)
+	r[0] = unicode.ToLower(r[0])
+	varEntityStructName := string(r)
 
-	r := []rune(lowerDbDriver)
+	r = []rune(lowerDbDriver)
 	r[0] = unicode.ToUpper(r[0])
 	dbDriverStr := string(r)
+
+	genDriver := driver.Get(dbDriver)
 
 	tplDataE := map[string]string{
 		"imports":             strings.Join(importsE, "\n"),
@@ -428,12 +447,14 @@ func (obj EntityDef) GenerateImpl(pathPrjDir string, dbDriver string) {
 	util.WriteTplFile(fnameE, txtEImpl, tplDataE)
 
 	tplDataService := map[string]string{
-		"imports":           strings.Join(importsService, "\n"),
-		"entityStructName":  entityStructName,
-		"varKeyName":        varKeyName,
-		"keyStructField":    keyStructField,
-		"keyType":           keyType,
-		"useIDConvertionFn": useIDConvertionFn,
+		"imports":             strings.Join(importsService, "\n"),
+		"entityStructName":    entityStructName,
+		"varEntityStructName": varEntityStructName,
+		"serviceFieldsCopy":   strings.Join(serviceFieldsCopy, "\n"),
+		"varKeyName":          varKeyName,
+		"keyStructField":      keyStructField,
+		"keyType":             keyType,
+		"useIDConvertionFn":   useIDConvertionFn,
 	}
 
 	util.WriteTplFile(fnameEService, txtEService, tplDataService)

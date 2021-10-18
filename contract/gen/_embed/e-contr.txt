@@ -6,25 +6,20 @@ import (
 	{{if ne .imports ""}}
 {{.imports}}{{end}}
 	// "github.com/albatiqy/gopoh/pkg/lib/null"
+	// "github.com/albatiqy/gopoh/pkg/lib/decimal"
 	// gopohRepo "github.com/albatiqy/gopoh/contract/repository"
 )
 
 type E{{.entityStructName}}Input struct { // harus subset dari E{{.entityStructName}}!
+{{.fieldsEInput}}
+}
+
+type {{.entityStructName}}Input struct {
 {{.fieldsInput}}
 }
 
-/*
-type {{.entityStructName}}Service interface {
-	Store(ctx context.Context, input E{{.entityStructName}}Input) (*E{{.entityStructName}}, error)
-	Update(ctx context.Context, input E{{.entityStructName}}Input, i{{.keyStructField}} interface{}) (*E{{.entityStructName}}, error)
-	Delete(ctx context.Context, i{{.keyStructField}} interface{})
-	GetByID(ctx context.Context, i{{.keyStructField}} interface{}) (*E{{.entityStructName}}, error)
-	FindAll(ctx context.Context, qOptCursor gopohRepo.QOptionCursor) ([]Q{{.entityStructName}}, *gopohRepo.QCursorData, error)
-}
-*/
-
-type E{{.entityStructName}}Writer interface {
-	Store(ctx context.Context, input E{{.entityStructName}}Input, {{.varKeyName}} {{.keyType}}) (*E{{.entityStructName}}, error)
-	Update(ctx context.Context, input E{{.entityStructName}}Input, {{.varKeyName}} {{.keyType}}) (*E{{.entityStructName}}, int64, error)
+type {{.entityStructName}}Writer interface {
+	Store(ctx context.Context, input {{.entityStructName}}Input, {{.varKeyName}} {{.keyType}}) (*E{{.entityStructName}}, error)
+	Update(ctx context.Context, input {{.entityStructName}}Input, {{.varKeyName}} {{.keyType}}) (*E{{.entityStructName}}, int64, error)
 	Delete(ctx context.Context, {{.varKeyName}} {{.keyType}}) (int64, error)
 }
