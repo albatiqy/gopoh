@@ -7,6 +7,7 @@ import (
 	gopohRepo "github.com/albatiqy/gopoh/contract/repository"
 	"github.com/albatiqy/gopoh/contract/repository/sqldb"
 	// "github.com/albatiqy/gopoh/pkg/lib/null"
+	// "github.com/albatiqy/gopoh/pkg/lib/decimal"
 )
 
 type {{.queryStructName}}Reader{{.dbDriverStr}} struct {

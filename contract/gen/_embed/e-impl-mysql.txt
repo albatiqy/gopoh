@@ -15,7 +15,7 @@ type {{.entityStructName}}Writer{{.dbDriverStr}} struct {
 	reader *{{.entityStructName}}Reader{{.dbDriverStr}}
 }
 
-func (w {{.entityStructName}}Writer{{.dbDriverStr}}) Store(ctx context.Context, input core.E{{.entityStructName}}Input, {{.varKeyName}} {{.keyType}}) (*core.E{{.entityStructName}}, error) {
+func (w {{.entityStructName}}Writer{{.dbDriverStr}}) Store(ctx context.Context, input core.{{.entityStructName}}WriterInput, {{.varKeyName}} {{.keyType}}) (*core.E{{.entityStructName}}, error) {
 	_, err := w.conn.ExecContext(ctx,
 		"{{.sqlEStore}}",
 		{{.varKeyName}},
@@ -29,7 +29,7 @@ func (w {{.entityStructName}}Writer{{.dbDriverStr}}) Store(ctx context.Context, 
 }
 
 // jika softDelete cek dulu di database
-func (w {{.entityStructName}}Writer{{.dbDriverStr}}) Update(ctx context.Context, input core.E{{.entityStructName}}Input, {{.varKeyName}} {{.keyType}}) (*core.E{{.entityStructName}}, int64, error) {
+func (w {{.entityStructName}}Writer{{.dbDriverStr}}) Update(ctx context.Context, input core.{{.entityStructName}}WriterInput, {{.varKeyName}} {{.keyType}}) (*core.E{{.entityStructName}}, int64, error) {
 	res, err := w.conn.ExecContext(ctx,
 		"{{.sqlEUpdate}}",
 {{.updateFieldArgs}}

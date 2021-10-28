@@ -14,12 +14,12 @@ type E{{.entityStructName}}Input struct { // harus subset dari E{{.entityStructN
 {{.fieldsEInput}}
 }
 
-type {{.entityStructName}}Input struct {
+type {{.entityStructName}}WriterInput struct {
 {{.fieldsInput}}
 }
 
 type {{.entityStructName}}Writer interface {
-	Store(ctx context.Context, input {{.entityStructName}}Input, {{.varKeyName}} {{.keyType}}) (*E{{.entityStructName}}, error)
-	Update(ctx context.Context, input {{.entityStructName}}Input, {{.varKeyName}} {{.keyType}}) (*E{{.entityStructName}}, int64, error)
+	Store(ctx context.Context, input {{.entityStructName}}WriterInput, {{.varKeyName}} {{.keyType}}) (*E{{.entityStructName}}, error)
+	Update(ctx context.Context, input {{.entityStructName}}WriterInput, {{.varKeyName}} {{.keyType}}) (*E{{.entityStructName}}, int64, error)
 	Delete(ctx context.Context, {{.varKeyName}} {{.keyType}}) (int64, error)
 }
